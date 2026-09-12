@@ -1,0 +1,7 @@
+# Diese Dateien kommen nicht ins Image
+__pycache__
+*.pyc
+.pytest_cache
+backend/tests
+pytest.ini
+README.md
