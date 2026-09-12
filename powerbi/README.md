@@ -50,7 +50,7 @@ Dimension zur Faktentabelle, Filterrichtung einfach; `DIM_DATE` zweimal:
 | Beziehung | Zustand |
 |---|---|
 | `FACT_BOOKINGS[arrival_date_key]` → `DIM_DATE[date_key]` | aktiv |
-| `FACT_BOOKINGS[reservation_status_date_key]` → `DIM_DATE[date_key]` | inaktiv, genutzt in *Erlös nach Stornodatum* über `USERELATIONSHIP` |
+| `FACT_BOOKINGS[reservation_status_date_key]` → `DIM_DATE[date_key]` | inaktiv, genutzt in *Gebuchter Umsatz nach Stornodatum* über `USERELATIONSHIP` |
 
 `DIM_DATE` ist als Datumstabelle markiert (`full_date`); automatische
 Datumstabellen sind abgeschaltet. `month_name` ist nach `month` sortiert.
