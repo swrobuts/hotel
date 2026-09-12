@@ -199,7 +199,7 @@ function saeulen(element, daten, o) {
       Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
       Plot.rectY(ueberschuss, { x: "datum", interval: "month", y1: "vorjahr", y2: "wert", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
-      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: 0.15, stroke: farbe, strokeWidth: 1.2, strokeOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
+      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: "none", stroke: farbe, strokeWidth: 1.6, strokeOpacity: deckkraft, insetLeft: inset + 0.8, insetRight: inset + 0.8 }),
       ...beschriftungsMarks(gehoben, (d) => o.format(d.wert)),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: "wert", title: o.tipp })),
