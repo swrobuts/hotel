@@ -134,12 +134,20 @@ function balkenPaar(element, daten, o) {
   });
 }
 
-// Gemeinsame Zeitachse für Säulendiagramme: Ticks je Quartal, Januar mit Jahreszahl.
+// Gemeinsame Zeitachse für Säulendiagramme: Ticks unter der Säulenmitte je Quartal (auf dem
+// Telefon je Halbjahr) und immer unter der letzten Säule, damit niemand Monate abzählen muss;
+// ein regulärer Tick, der dem letzten Monat zu nahe käme, entfällt. Jahreszahl im Januar
+// sowie beim ersten und letzten Monat.
 function zeitachse(bereich) {
-  const erster = +bereich[0];
+  const monate = d3.utcMonths(bereich[0], bereich[1]);
+  const schritt = schmal() ? 6 : 3, abstand = Math.ceil(schritt / 2);
+  const letzter = monate.length - 1;
+  const ticks = monate.filter((m, i) => i === letzter || (i % schritt === 0 && letzter - i >= abstand));
+  const schluessel = (d) => d.getUTCFullYear() * 100 + d.getUTCMonth();
+  const mitJahr = new Set([schluessel(monate[0]), schluessel(monate[letzter])]);
   return {
-    label: null, domain: bereich, ticks: schmal() ? d3.utcMonth.every(6) : d3.utcMonth.every(3), tickSize: 4,
-    tickFormat: (d) => (d.getUTCMonth() === 0 || +d === erster ? MONATE_KURZ[d.getUTCMonth()] + " " + d.getUTCFullYear() : MONATE_KURZ[d.getUTCMonth()]),
+    label: null, domain: bereich, ticks: ticks.map(monatsmitte), tickSize: 4,
+    tickFormat: (d) => MONATE_KURZ[d.getUTCMonth()] + (d.getUTCMonth() === 0 || mitJahr.has(schluessel(d)) ? " " + d.getUTCFullYear() : ""),
   };
 }
 
