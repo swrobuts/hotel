@@ -1,0 +1,24 @@
+model Model
+	culture: de-DE
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: de-DE
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 0
+
+annotation PBI_QueryOrder = ["FACT_BOOKINGS", "DIM_HOTEL", "DIM_DATE", "DIM_MARKET_SEGMENT", "DIM_DISTRIBUTION_CHANNEL", "DIM_CUSTOMER_TYPE", "DIM_MEAL", "DIM_DEPOSIT_TYPE", "DIM_COUNTRY"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table FACT_BOOKINGS
+ref table DIM_HOTEL
+ref table DIM_DATE
+ref table DIM_MARKET_SEGMENT
+ref table DIM_DISTRIBUTION_CHANNEL
+ref table DIM_CUSTOMER_TYPE
+ref table DIM_MEAL
+ref table DIM_DEPOSIT_TYPE
+ref table DIM_COUNTRY
+

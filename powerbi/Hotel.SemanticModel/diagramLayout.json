@@ -1,0 +1,139 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 50.000000000000014,
+            "y": 329.89985630055577
+          },
+          "nodeIndex": "DIM_COUNTRY",
+          "nodeLineageTag": "3917c1ca-dd44-5b6b-ada2-edc3b0b32430",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 730.62551160298983,
+            "y": 590.6654972231845
+          },
+          "nodeIndex": "DIM_CUSTOMER_TYPE",
+          "nodeLineageTag": "9d1e0b64-ac04-5eaf-b597-942ba98c6eb9",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 338.76807924908218,
+            "y": 3.3061232987537323
+          },
+          "nodeIndex": "DIM_DATE",
+          "nodeLineageTag": "bb270640-765b-50d3-bb63-d76d240ccbbb",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 628.64085729583383,
+            "y": -50
+          },
+          "nodeIndex": "DIM_DEPOSIT_TYPE",
+          "nodeLineageTag": "640e23fc-273f-5c6b-bb25-78563d374afb",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 725.12173632699853,
+            "y": 345.54554375701753
+          },
+          "nodeIndex": "DIM_DISTRIBUTION_CHANNEL",
+          "nodeLineageTag": "74cd33c2-f6eb-5275-8976-b374649f87ad",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 261.81646289292786,
+            "y": 718.25220151160215
+          },
+          "nodeIndex": "DIM_HOTEL",
+          "nodeLineageTag": "664b1e44-d429-5312-9c8f-30ac48143970",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 145.15796889231012,
+            "y": 509.65791825146027
+          },
+          "nodeIndex": "DIM_MARKET_SEGMENT",
+          "nodeLineageTag": "962afcdf-68d3-5fcb-91d2-8eb08b4b5c25",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 551.74182750282,
+            "y": 772.18716691667942
+          },
+          "nodeIndex": "DIM_MEAL",
+          "nodeLineageTag": "ec874dd9-d691-5081-bee6-023e11840698",
+          "size": {
+            "height": 128,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 435.14479021559697,
+            "y": 362.72103382271109
+          },
+          "nodeIndex": "FACT_BOOKINGS",
+          "nodeLineageTag": "6c1b786b-0f4d-5443-bd18-8c35336f7684",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "Alle Tabellen",
+      "zoomValue": 75.796012851407625,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "Alle Tabellen",
+  "defaultDiagram": "Alle Tabellen"
+}

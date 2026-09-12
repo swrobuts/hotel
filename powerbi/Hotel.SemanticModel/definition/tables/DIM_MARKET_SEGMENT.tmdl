@@ -1,0 +1,31 @@
+table DIM_MARKET_SEGMENT
+	lineageTag: 962afcdf-68d3-5fcb-91d2-8eb08b4b5c25
+
+	column market_segment_id
+		dataType: int64
+		formatString: 0
+		lineageTag: d3fc16da-d051-5faf-a91a-1ff8c2c68680
+		summarizeBy: none
+		sourceColumn: market_segment_id
+
+		annotation SummarizationSetBy = User
+
+	column market_segment
+		dataType: string
+		lineageTag: fe0673cc-bc8d-5a49-9d7f-92b1be887e61
+		summarizeBy: none
+		sourceColumn: market_segment
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_MARKET_SEGMENT = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_market_segment"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

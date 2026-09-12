@@ -35,8 +35,10 @@ mit dieser Referenzlösung; Dozierende öffnen die PBIX per Doppelklick.
   (Ganzzahl) gewandelt, damit die Katalogformeln (`= 1`) gelten.
 * `DIM_DATE` als Datumstabelle markiert (`full_date`), automatische
   Datumstabellen aus.
-* Kartenvisual auf Seite 4 nur, wenn Azure Maps die ISO-3-Codes auflöst;
-  sonst Balkendiagramm Top-10-Länder.
+* Kartenvisual auf Seite 4: verworfen. Die klassischen Karten sind in
+  Desktop standardmäßig deaktiviert, Azure Maps verlangt eine Anmeldung mit
+  Microsoft-Konto. Stattdessen Treemap der Länder, Top-10-Balkendiagramm
+  (Top-N-Filter) und Ländertabelle (Umsetzung 12.09.2026).
 * Ablage `powerbi/Hotel.pbip`, `powerbi/Hotel.SemanticModel/`,
   `powerbi/Hotel.Report/`, `powerbi/Hotel.pbix`, `powerbi/README.md`,
   `powerbi/bilder/` (eine Abbildung je Seite).

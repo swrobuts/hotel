@@ -1,0 +1,31 @@
+table DIM_DISTRIBUTION_CHANNEL
+	lineageTag: 74cd33c2-f6eb-5275-8976-b374649f87ad
+
+	column distribution_channel_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 50c66f05-f2d1-5dee-801f-230af75c17bc
+		summarizeBy: none
+		sourceColumn: distribution_channel_id
+
+		annotation SummarizationSetBy = User
+
+	column distribution_channel
+		dataType: string
+		lineageTag: 6d8fc7aa-fe45-5bb6-9751-0f848fc135ac
+		summarizeBy: none
+		sourceColumn: distribution_channel
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_DISTRIBUTION_CHANNEL = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_distribution_channel"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

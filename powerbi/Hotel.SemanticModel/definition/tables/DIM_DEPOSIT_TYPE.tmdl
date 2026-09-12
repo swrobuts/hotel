@@ -1,0 +1,31 @@
+table DIM_DEPOSIT_TYPE
+	lineageTag: 640e23fc-273f-5c6b-bb25-78563d374afb
+
+	column deposit_type_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 1b90dd5d-834a-5b65-bf4f-823d1c908cea
+		summarizeBy: none
+		sourceColumn: deposit_type_id
+
+		annotation SummarizationSetBy = User
+
+	column deposit_type
+		dataType: string
+		lineageTag: f721a90e-7c7e-5ac3-936d-13e98a2bbbd4
+		summarizeBy: none
+		sourceColumn: deposit_type
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_DEPOSIT_TYPE = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_deposit_type"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

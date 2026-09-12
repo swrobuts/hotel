@@ -20,21 +20,21 @@
 
 ### Task 1: Minimal-Projekt öffnen (Formatprobe)
 
-- [ ] Minimal-PBIP (Modell: `DIM_HOTEL`; Report: eine Karte) erzeugen, in die VM kopieren (`C:\Users\robert\hotel-pbi`), `PBIDesktop.exe` starten, Bildschirmfoto.
-- [ ] Kennwortdialog und Verschlüsselungsnachfrage per PowerShell/SendKeys bedienen, Laden prüfen.
-- [ ] In Desktop speichern (Strg+S); die von Desktop geschriebenen Dateien als Formatreferenz sichern.
+- [x] Minimal-PBIP (Modell: `DIM_HOTEL`; Report: eine Karte) erzeugen, in die VM kopieren (`C:\Users\robert\hotel-pbi`), `PBIDesktop.exe` starten, Bildschirmfoto.
+- [x] Kennwortdialog und Verschlüsselungsnachfrage per PowerShell/SendKeys bedienen, Laden prüfen.
+- [x] In Desktop speichern (Strg+S); die von Desktop geschriebenen Dateien als Formatreferenz sichern.
 
 ### Task 2: Semantisches Modell
 
-- [ ] `Hotel.SemanticModel/definition/*.tmdl`: neun Tabellen mit M-Partitionen, Spaltentypen, Beziehungen, Measures, berechnete Spalten, Datumstabelle.
-- [ ] Öffnen, Laden, Modellansicht per Bildschirmfoto; Kennzahlen mit einer Prüfseite (Karten) gegen das Notebook.
+- [x] `Hotel.SemanticModel/definition/*.tmdl`: neun Tabellen mit M-Partitionen, Spaltentypen, Beziehungen, Measures, berechnete Spalten, Datumstabelle.
+- [x] Öffnen, Laden, Modellansicht per Bildschirmfoto; Kennzahlen mit einer Prüfseite (Karten) gegen das Notebook.
 
 ### Task 3: Report-Seiten
 
-- [ ] Vier Seiten als PBIR erzeugen (Generator in Python, Positionen auf 1280×720).
-- [ ] Jede Seite per Bildschirmfoto prüfen; Fehler korrigieren; Karte prüfen oder ersetzen.
+- [x] Vier Seiten als PBIR erzeugen (Generator in Python, Positionen auf 1280×720).
+- [x] Jede Seite per Bildschirmfoto prüfen; Fehler korrigieren; Karte prüfen oder ersetzen.
 
 ### Task 4: Speichern und Übernahme
 
-- [ ] Strg+S (PBIP kanonisch), *Speichern unter* `Hotel.pbix`; beides in `powerbi/` übernehmen.
-- [ ] `powerbi/README.md` und `powerbi/bilder/`, Verweis im Haupt-README; Commit, Push.
+- [x] Strg+S (PBIP kanonisch), *Speichern unter* `Hotel.pbix`; beides in `powerbi/` übernehmen.
+- [x] `powerbi/README.md` und `powerbi/bilder/`, Verweis im Haupt-README; Commit, Push.

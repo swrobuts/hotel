@@ -1,0 +1,31 @@
+table DIM_MEAL
+	lineageTag: ec874dd9-d691-5081-bee6-023e11840698
+
+	column meal_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 7f51a83b-9f4c-5839-ad42-1e6237d0377d
+		summarizeBy: none
+		sourceColumn: meal_id
+
+		annotation SummarizationSetBy = User
+
+	column meal
+		dataType: string
+		lineageTag: 61b5e41a-2f93-5272-ae95-ec39361a4154
+		summarizeBy: none
+		sourceColumn: meal
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_MEAL = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_meal"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

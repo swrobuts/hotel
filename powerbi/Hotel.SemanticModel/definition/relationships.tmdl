@@ -1,0 +1,37 @@
+relationship 025a6d0e-2e80-5438-bb6d-bea722b26674
+	fromColumn: FACT_BOOKINGS.hotel_id
+	toColumn: DIM_HOTEL.hotel_id
+
+relationship df8726a2-76b1-502d-9f79-b0a1310d9151
+	fromColumn: FACT_BOOKINGS.arrival_date_key
+	toColumn: DIM_DATE.date_key
+
+relationship bb6ea087-d4ed-5f81-be79-2910905ecbe8
+	isActive: false
+	fromColumn: FACT_BOOKINGS.reservation_status_date_key
+	toColumn: DIM_DATE.date_key
+
+relationship 014c003d-89c1-5c47-8d0d-0dc167b746bc
+	fromColumn: FACT_BOOKINGS.market_segment_id
+	toColumn: DIM_MARKET_SEGMENT.market_segment_id
+
+relationship 096043bc-ebd2-5315-899c-f6c32d290fca
+	fromColumn: FACT_BOOKINGS.distribution_channel_id
+	toColumn: DIM_DISTRIBUTION_CHANNEL.distribution_channel_id
+
+relationship 33713f9b-e935-554c-8899-8480feb57fb3
+	fromColumn: FACT_BOOKINGS.customer_type_id
+	toColumn: DIM_CUSTOMER_TYPE.customer_type_id
+
+relationship dda7dc00-d873-57bc-8884-9022cc640715
+	fromColumn: FACT_BOOKINGS.meal_id
+	toColumn: DIM_MEAL.meal_id
+
+relationship 366f77f9-5bcb-5762-bc76-8fecfff7d4d8
+	fromColumn: FACT_BOOKINGS.deposit_type_id
+	toColumn: DIM_DEPOSIT_TYPE.deposit_type_id
+
+relationship 4b3afa49-7b3b-52f0-8efb-b9198cef629d
+	fromColumn: FACT_BOOKINGS.country_id
+	toColumn: DIM_COUNTRY.country_id
+

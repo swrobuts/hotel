@@ -49,6 +49,10 @@ Bearbeiten *Datei → Kopie in Drive speichern*.
    `dim_date` ist zweimal verknüpft: über `arrival_date_key` (aktiv) und über
    `reservation_status_date_key` (inaktiv, für `USERELATIONSHIP`).
 
+Die fertige Referenzlösung (Modell, Measures, vier Seiten) liegt unter
+[`powerbi/`](powerbi/README.md) — als `Hotel.pbix` zum Öffnen und als
+Power-BI-Projekt (`Hotel.pbip`) zum Nachlesen.
+
 ### Tableau Desktop
 
 1. *Verbinden → Mit einem Server → PostgreSQL*. Fehlt der Treiber, zeigt
@@ -105,6 +109,7 @@ Server schreiben und wird für den Download nicht gebraucht.
 | `sql/01_schema.sql` | Sternschema als PostgreSQL-DDL (Schema `hotel_bi`) |
 | `sql/02_load_data.py` | Ladeskript: leert die Tabellen und lädt die CSV-Dateien per `COPY` |
 | `sql/03_rolle_studi_hotel.sql` | lesende Rolle `studi_hotel` |
+| `powerbi/` | Referenzlösung des Power-BI-Reports: `Hotel.pbix`, Projekt `Hotel.pbip`, Abbildungen der vier Seiten |
 | `docs/Supabase_Setup_VPS.md` | die Instanz, Verbindungsdaten, Neuaufbau der Datenbank, Sicherheit |
 | `docs/superpowers/` | Entwurf und Umsetzungsplan der Produktivsetzung |
 | `requirements.txt`, `.env.example` | Python-Abhängigkeiten, Vorlage für die Betreiberverbindung |
@@ -145,5 +150,5 @@ die auch auf Kaggle als *Hotel Booking Demand* verfügbar ist.
 
 ## Nächste Schritte
 
-Umsetzung des Reports in Power BI (alternativ Tableau) auf Basis dieser
-Datenbank; danach ein interaktives Dashboard in Python/JavaScript.
+Umsetzung des Reports in Tableau (analog zur Power-BI-Referenzlösung); danach
+ein interaktives Dashboard in Python/JavaScript.

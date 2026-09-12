@@ -1,0 +1,31 @@
+table DIM_CUSTOMER_TYPE
+	lineageTag: 9d1e0b64-ac04-5eaf-b597-942ba98c6eb9
+
+	column customer_type_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 9aa99008-c103-5c63-8102-87d88c183f1e
+		summarizeBy: none
+		sourceColumn: customer_type_id
+
+		annotation SummarizationSetBy = User
+
+	column customer_type
+		dataType: string
+		lineageTag: 48eeb0ae-eeb1-5c15-b97c-51f1eaef5570
+		summarizeBy: none
+		sourceColumn: customer_type
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_CUSTOMER_TYPE = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_customer_type"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

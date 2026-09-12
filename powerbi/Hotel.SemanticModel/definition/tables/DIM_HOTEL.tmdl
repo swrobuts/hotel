@@ -1,0 +1,31 @@
+table DIM_HOTEL
+	lineageTag: 664b1e44-d429-5312-9c8f-30ac48143970
+
+	column hotel_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 38168f0a-d2d8-582f-8254-d490cd95d5f9
+		summarizeBy: none
+		sourceColumn: hotel_id
+
+		annotation SummarizationSetBy = User
+
+	column hotel
+		dataType: string
+		lineageTag: 90739141-0c7c-501a-b749-121a1c0191af
+		summarizeBy: none
+		sourceColumn: hotel
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_HOTEL = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_hotel"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

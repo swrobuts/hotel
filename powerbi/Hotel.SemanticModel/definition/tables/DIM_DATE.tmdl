@@ -1,0 +1,124 @@
+table DIM_DATE
+	lineageTag: bb270640-765b-50d3-bb63-d76d240ccbbb
+	dataCategory: Time
+
+	column date_key
+		dataType: int64
+		formatString: 0
+		lineageTag: e060715e-9b82-50de-9ec7-271df39a07cc
+		summarizeBy: none
+		sourceColumn: date_key
+
+		annotation SummarizationSetBy = User
+
+	column year
+		dataType: int64
+		formatString: 0
+		lineageTag: 8c2605a4-2b91-5082-ae62-39372365e405
+		summarizeBy: none
+		sourceColumn: year
+
+		annotation SummarizationSetBy = User
+
+	column quarter
+		dataType: int64
+		formatString: 0
+		lineageTag: 8dc33888-991d-55b7-bd62-4a64427920db
+		summarizeBy: none
+		sourceColumn: quarter
+
+		annotation SummarizationSetBy = User
+
+	column month
+		dataType: int64
+		formatString: 0
+		lineageTag: bc65f778-17cd-50f3-bc24-d1feb7c797f3
+		summarizeBy: none
+		sourceColumn: month
+
+		annotation SummarizationSetBy = User
+
+	column month_name
+		dataType: string
+		lineageTag: 529d7dfe-ad36-5635-ae49-7bbce1f655e9
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: month
+
+		annotation SummarizationSetBy = User
+
+	column week
+		dataType: int64
+		formatString: 0
+		lineageTag: 36ec0b56-5833-5476-bd91-b97e2d823405
+		summarizeBy: none
+		sourceColumn: week
+
+		annotation SummarizationSetBy = User
+
+	column day
+		dataType: int64
+		formatString: 0
+		lineageTag: 36ac404d-6226-5aaa-b20a-255256d6f028
+		summarizeBy: none
+		sourceColumn: day
+
+		annotation SummarizationSetBy = User
+
+	column weekday_name
+		dataType: string
+		lineageTag: b33cef82-4f91-5f0e-9c91-cd2a8ca4866c
+		summarizeBy: none
+		sourceColumn: weekday_name
+		sortByColumn: 'Wochentag Nr'
+
+		annotation SummarizationSetBy = User
+
+	column is_weekend
+		dataType: boolean
+		lineageTag: da50672c-6b85-5e61-9f82-c907372dd68a
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+		annotation SummarizationSetBy = User
+
+	column full_date
+		dataType: dateTime
+		isKey
+		formatString: dd.MM.yyyy
+		lineageTag: 82b98d51-0867-5a5e-ae4d-7ab8028f163b
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+		annotation SummarizationSetBy = User
+
+	column Monat = DATE(DIM_DATE[year], DIM_DATE[month], 1)
+		dataType: dateTime
+		formatString: MMM yyyy
+		lineageTag: e45dd578-c541-527a-964a-d30af449a441
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	column 'Wochentag Nr' = WEEKDAY(DIM_DATE[full_date], 2)
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 1a713cdd-2eab-5bbe-abf8-9aa07a807b12
+		summarizeBy: none
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_DATE = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_date"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+

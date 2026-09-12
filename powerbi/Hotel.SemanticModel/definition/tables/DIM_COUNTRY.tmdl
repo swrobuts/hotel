@@ -1,0 +1,32 @@
+table DIM_COUNTRY
+	lineageTag: 3917c1ca-dd44-5b6b-ada2-edc3b0b32430
+
+	column country_id
+		dataType: int64
+		formatString: 0
+		lineageTag: 4ec94a7f-6319-5aa4-9742-37edd5a6de9e
+		summarizeBy: none
+		sourceColumn: country_id
+
+		annotation SummarizationSetBy = User
+
+	column country
+		dataType: string
+		lineageTag: efbf41a8-c930-5af7-a668-e3c80f060511
+		dataCategory: Country
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = User
+
+	partition DIM_COUNTRY = m
+		mode: import
+		source =
+				let
+				    Quelle = PostgreSQL.Database("supabase.butscher.cloud:5433", "hotel"),
+				    Tabelle = Quelle{[Schema="hotel_bi",Item="dim_country"]}[Data]
+				in
+				    Tabelle
+
+	annotation PBI_ResultType = Table
+
