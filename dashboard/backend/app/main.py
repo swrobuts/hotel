@@ -22,6 +22,15 @@ FRONTEND = Path(__file__).resolve().parent.parent.parent / "frontend"
 app = FastAPI(title="Hotel Booking Demand – Dashboard", version="1.0.0")
 
 
+@app.middleware("http")
+async def kein_zwischenspeicher(request, aufruf):
+    """Browser sollen JavaScript und CSS nach jedem Deploy neu prüfen (ETag), statt alte Kopien zu behalten."""
+    antwort = await aufruf(request)
+    if request.url.path.endswith((".js", ".css", ".html")) or request.url.path == "/":
+        antwort.headers["Cache-Control"] = "no-cache"
+    return antwort
+
+
 def filter_parameter(
     hotel: str | None = None, jahr: str | None = None, von: str | None = None, bis: str | None = None,
     segment: str | None = None, kanal: str | None = None, kundentyp: str | None = None,

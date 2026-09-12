@@ -1,8 +1,8 @@
 // Eine sortierbare, gruppierbare Tabelle mit Datenbalken.
 //
-// spalten: [{ feld, titel, format, numerisch, balken, klasse, aggregat }]
-//   aggregat: Funktion (zeilen) -> Wert für Gruppenzeilen; fehlt sie, bleibt die Zelle leer.
-// optionen: { sortierung: {feld, absteigend}, gruppierung: feldname | null,
+// spalten: [{ feld, titel, format, numerisch, balken, klasse, aggregat, zeichnen, lang }]
+//   aggregat: Funktion (zeilen) -> Wert für Gruppen- und Summenzeilen; fehlt sie, bleibt die Zelle leer.
+// optionen: { sortierung: {feld, absteigend}, gruppierung: feldname | null, summenzeile: false | true | "Beschriftung",
 //             aktiv: (zeile) -> bool, beiKlick: (zeile) -> void, beiSortierung: (sortierung) -> void }
 
 // Baut die Tabelle in das table-Element; Klick auf den Kopf sortiert, Gruppen erhalten Summenzeilen.
@@ -45,6 +45,13 @@ function tabelleBauen(tabelle, spalten, zeilen, o) {
     }
   } else {
     koerper = sortiere(zeilen).map(datenzeile).join("");
+  }
+  // Optionale Summenzeile über alle Zeilen (z. B. "beide Hotels")
+  if (o.summenzeile) {
+    const summe = { __gruppe: true };
+    for (const s of spalten) summe[s.feld] = s.aggregat ? s.aggregat(zeilen) : null;
+    if (spalten[0] && summe[spalten[0].feld] == null) summe[spalten[0].feld] = o.summenzeile === true ? "Gesamt" : o.summenzeile;
+    koerper += `<tr class="gruppe summe">` + spalten.map((s) => zelle(s, summe, false)).join("") + "</tr>";
   }
   tabelle.innerHTML = `<thead><tr>${kopf}</tr></thead><tbody>${koerper}</tbody>`;
 

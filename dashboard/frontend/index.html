@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hotel Booking Demand – Dashboard</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2026-09-12c">
 </head>
 <body>
 <main>
@@ -37,10 +37,18 @@
     <h2>Auf einen Blick</h2>
     <p class="lead" id="lead-ueberblick"></p>
     <div id="kacheln"></div>
+    <p class="kacheln-hinweis" id="kacheln-hinweis"></p>
+    <figure id="fig-hotelvergleich">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="tabellenkasten"><table id="tabelle-hotelvergleich"></table></div>
+      <p class="quelle">Beide Hotels mit allen übrigen Filtern; Klick auf eine Zeile setzt den Hotelfilter. <span class="signal besser"></span> markiert je Kennzahl das betriebswirtschaftlich bessere Hotel.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="hotels_beide"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
     <figure id="fig-kennzahlen">
       <h3 class="aussage"></h3><p class="beschreibung"></p>
       <div class="tabellenkasten"><table id="tabelle-kennzahlen"></table></div>
-      <p class="quelle">Definitionen wie im KPI-Katalog des Grundgerüsts und im Notebook (Abschnitt 4). Verlauf: je Anreisemonat, Skala je Zeile (Minimum und Maximum stehen daneben).</p>
+      <p class="quelle">Definitionen wie im KPI-Katalog des Grundgerüsts und im Notebook (Abschnitt 4). Verlauf: Säulen je Anreisemonat ab null, gleiche Zeitachse für alle Zeilen (Juli 2015 bis August 2017), Skala je Zeile bis zum Maximum; Monate außerhalb des Zeitfilters hell, der Bezugsmonat dunkel. Abweichungen: Bezugsmonat gegenüber Vormonat und Vorjahresmonat; <span class="signal besser"></span> besser, <span class="signal schlechter"></span> schlechter, grau ohne Wertung.</p>
       <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
       <details class="sql" data-route="kennzahlen"><summary>SQL anzeigen</summary><pre></pre></details>
     </figure>
@@ -52,7 +60,7 @@
     <figure id="fig-zeitverlauf">
       <h3 class="aussage"></h3><p class="beschreibung"></p>
       <div class="diagramm gestapelt"><div id="zeit-buchungen"></div><div id="zeit-erloes"></div><div id="zeit-storno"></div></div>
-      <p class="quelle">Drei Felder, eine Zeitachse; jedes Feld hat seine eigene Einheit und Skala. Werte stehen am Linienende.</p>
+      <p class="quelle">Die Säule ist der Monatswert. <span class="signal besser"></span> gefüllt: Zuwachs gegenüber dem Vorjahresmonat &nbsp; <span class="signal schlechter"></span> Umriss über der Säule: Fehlbetrag bis zum Vorjahresmonat (bei der Stornoquote gilt niedriger als besser, die Farben sind dort vertauscht) · Monate außerhalb des Zeitfilters sind hell · Drei Felder, eine Zeitachse, jedes Feld mit eigener Einheit und Skala.</p>
       <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
       <details class="sql" data-route="monate"><summary>SQL anzeigen</summary><pre></pre></details>
     </figure>
@@ -93,22 +101,22 @@
     <p class="lead" id="lead-storno"></p>
     <figure id="fig-storno">
       <h3 class="aussage"></h3><p class="beschreibung"></p>
-      <div class="raster-2 gleiche-skala">
+      <div class="untereinander">
         <div><h4>nach Hotel</h4><div class="diagramm" id="storno-hotel"></div></div>
         <div><h4>nach Kautionstyp</h4><div class="diagramm" id="storno-kaution"></div></div>
         <div><h4>nach Marktsegment</h4><div class="diagramm" id="storno-segment"></div></div>
         <div><h4>nach Vorlaufzeit (Tage zwischen Buchung und Anreise)</h4><div class="diagramm" id="storno-vorlaufzeit"></div></div>
       </div>
-      <p class="quelle">Alle vier Felder auf derselben Skala von 0 bis 100 %; die gestrichelte Linie ist die Stornoquote des gesamten gefilterten Bestands.</p>
+      <p class="quelle">Alle vier Diagramme auf derselben Skala von 0 bis 100 %; die gestrichelte Linie ist die Stornoquote über alle Buchungen des aktuellen Filters. Hover zeigt Anzahl Buchungen und Abstand zur Linie.</p>
       <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
       <details class="sql" data-route="vorlaufzeit"><summary>SQL anzeigen (Vorlaufzeit)</summary><pre></pre></details>
     </figure>
-    <figure id="fig-datum">
+    <figure id="fig-erloesverlust">
       <h3 class="aussage"></h3><p class="beschreibung"></p>
-      <div class="diagramm" id="erloes-datum"></div>
-      <p class="quelle">Dieselbe Kennzahl über zwei Verknüpfungen mit der Datumstabelle: Anreisedatum (aktive Beziehung in Power BI) und Datum des Reservierungsstatus (inaktive Beziehung, USERELATIONSHIP). Zeitfilter gelten je Reihe für das jeweilige Datum.</p>
+      <div class="diagramm" id="erloesverlust"></div>
+      <p class="quelle"><span class="signal grau"></span> realisierter Erlös (nicht stornierte Buchungen) &nbsp; <span class="signal storno"></span> durch Stornierung entgangener Erlös · Erlös = Tagesrate × Nächte je Buchung.</p>
       <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
-      <details class="sql" data-route="erloes_datum"><summary>SQL anzeigen</summary><pre></pre></details>
+      <details class="sql" data-route="monate"><summary>SQL anzeigen</summary><pre></pre></details>
     </figure>
   </section>
 
@@ -118,7 +126,7 @@
     <figure id="fig-laender">
       <h3 class="aussage"></h3><p class="beschreibung"></p>
       <div class="diagramm" id="balken-laender"></div>
-      <p class="quelle">Ländercodes nach ISO 3166-1 alpha-3, wie im Datensatz; „CN" steht dort für China, „UNK" für unbekannt.</p>
+      <p class="quelle">Ländernamen aus den ISO-3-Codes des Datensatzes; „CN" steht dort für China, „UNK" für unbekannt.</p>
       <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
       <details class="sql" data-route="laender"><summary>SQL anzeigen</summary><pre></pre></details>
     </figure>
@@ -140,10 +148,12 @@
 <!-- Bibliotheken mit fester Version, damit alle dasselbe Verhalten sehen -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/dist/plot.umd.min.js"></script>
-<script src="format.js"></script>
-<script src="diagramme.js"></script>
-<script src="tabelle.js"></script>
-<script src="texte.js"></script>
-<script src="app.js"></script>
+<script src="format.js?v=2026-09-12c"></script>
+<script src="laendernamen.js?v=2026-09-12c"></script>
+<script src="bezeichnungen.js?v=2026-09-12c"></script>
+<script src="diagramme.js?v=2026-09-12c"></script>
+<script src="tabelle.js?v=2026-09-12c"></script>
+<script src="texte.js?v=2026-09-12c"></script>
+<script src="app.js?v=2026-09-12c"></script>
 </body>
 </html>

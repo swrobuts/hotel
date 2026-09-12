@@ -9,13 +9,29 @@
 const FILTER_NAMEN = ["hotel", "jahr", "von", "bis", "segment", "kanal", "kundentyp", "kaution", "land", "vorlaufzeit"];
 const FILTER_TITEL = { hotel: "Hotel", jahr: "Anreisejahr", segment: "Marktsegment", kanal: "Vertriebskanal",
   kundentyp: "Kundentyp", kaution: "Kautionstyp", land: "Land", vorlaufzeit: "Vorlaufzeit" };
-const ROUTEN = ["kennzahlen", "monate", "hotels", "segmente", "kanaele", "kautionen", "vorlaufzeit",
-  "segment_kundentyp", "erloes_datum", "laender", "laender_hotel"];
-const HOTELFARBEN = { "City Hotel": FARBE.tinte, "Resort Hotel": FARBE.vergleich };
+const ZEITFILTER = ["jahr", "von", "bis"];
+// Routen, die mit allen Filtern geladen werden
+const ROUTEN = ["kennzahlen", "segmente", "kanaele", "kautionen", "vorlaufzeit", "segment_kundentyp", "laender", "laender_hotel"];
+
+// Die zehn Kennzahlen des Katalogs: Feldname, Titel, Formate, Richtung ("hoeherBesser": true = mehr ist gut,
+// false = weniger ist gut, null = ohne Wertung) und Definition.
+const KPIS = [
+  { feld: "gesamterloes", titel: "Gesamterlös in €", kurztitel: "Erlös", format: zahl, kachel: kurz, hoeherBesser: true, definition: "Summe von revenue = adr × total_nights, auch stornierte Buchungen" },
+  { feld: "anzahl_buchungen", titel: "Anzahl Buchungen", kurztitel: "Buchungen", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Zeilen der Faktentabelle" },
+  { feld: "stornoquote", titel: "Stornoquote", kurztitel: "Storno", format: prozent, kachel: prozent, hoeherBesser: false, klasse: "storno", definition: "Anteil der Buchungen mit is_canceled = 1" },
+  { feld: "adr", titel: "Ø Zimmerpreis (ADR) in €", kurztitel: "Ø ADR in €", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von adr (Average Daily Rate)" },
+  { feld: "vorlaufzeit", titel: "Ø Vorlaufzeit in Tagen", kurztitel: "Ø Vorlauf (Tage)", format: dezimal1, kachel: dezimal1, hoeherBesser: null, definition: "Mittelwert von lead_time" },
+  { feld: "aufenthaltsdauer", titel: "Ø Aufenthalt in Nächten", kurztitel: "Ø Nächte", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von total_nights" },
+  { feld: "erloes_nicht_storniert", titel: "Erlös nicht stornierter Buchungen in €", kurztitel: "Erlös realisiert in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "revenue der Buchungen mit is_canceled = 0" },
+  { feld: "zimmernaechte", titel: "Gebuchte Zimmernächte", kurztitel: "Zimmernächte", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Summe von total_nights; Ersatz für die Auslastung, weil die Kapazität fehlt" },
+  { feld: "wiederholungsgaeste", titel: "Wiederholungsgast-Anteil", kurztitel: "Wiederholungsgäste", format: prozent, kachel: prozent, hoeherBesser: true, definition: "Anteil der Buchungen mit is_repeated_guest = 1" },
+  { feld: "sonderwuensche", titel: "Anteil mit Sonderwünschen", kurztitel: "Sonderwünsche", format: prozent, kachel: prozent, hoeherBesser: null, definition: "Anteil der Buchungen mit total_of_special_requests > 0" },
+];
+const KACHEL_KPIS = KPIS.slice(0, 6);
 
 const zustand = {
-  filter: {}, daten: {}, gesamt: null, gesamtMonate: null,
-  sortierung: { laender: { feld: "anzahl", absteigend: true }, pivot: { feld: "gesamt", absteigend: true }, kennzahlen: { feld: "reihenfolge", absteigend: false } },
+  filter: {}, daten: {},
+  sortierung: { laender: { feld: "anzahl", absteigend: true }, pivot: { feld: "gesamt", absteigend: true }, kennzahlen: { feld: "reihenfolge", absteigend: false }, hotelvergleich: { feld: "reihenfolge", absteigend: false } },
   gruppierung: { laender: "", pivot: "" },
 };
 
@@ -62,6 +78,22 @@ function filterZuruecksetzen() {
   allesLaden();
 }
 
+// Der Filter ohne bestimmte Namen (z. B. ohne Zeitfilter, um den ganzen Verlauf zu laden).
+function filterOhne(namen) {
+  const rest = {};
+  for (const [name, wert] of Object.entries(zustand.filter)) if (!namen.includes(name)) rest[name] = wert;
+  return rest;
+}
+
+// Liegt der Monat im Zeitfilter? Ohne Zeitfilter gilt jeder Monat.
+function imZeitfilter(datum) {
+  const f = zustand.filter, schluessel = monatsschluessel(datum);
+  if (f.jahr && datum.getUTCFullYear() !== Number(f.jahr)) return false;
+  if (f.von && schluessel < f.von) return false;
+  if (f.bis && schluessel > f.bis) return false;
+  return true;
+}
+
 // Der Zeitraum als Text für Beschreibungen, aus den Filtern oder dem ganzen Datensatz.
 function zeitraumText() {
   const f = zustand.filter;
@@ -74,15 +106,15 @@ function zeitraumText() {
 
 // Die übrigen aktiven Filter als Text für Beschreibungen.
 function filterText() {
-  return FILTER_NAMEN.filter((n) => zustand.filter[n] && !["jahr", "von", "bis"].includes(n))
-    .map((n) => FILTER_TITEL[n] + " " + zustand.filter[n]).join(", ");
+  return FILTER_NAMEN.filter((n) => zustand.filter[n] && !ZEITFILTER.includes(n))
+    .map((n) => FILTER_TITEL[n] + " " + klarname(n, zustand.filter[n])).join(", ");
 }
 
 // ---------------------------------------------------------------------------
 // Daten laden
 // ---------------------------------------------------------------------------
 
-// Holt eine Route mit den aktuellen Filtern als Parametern.
+// Holt eine Route mit Filtern als Parametern.
 async function holen(route, filter = zustand.filter) {
   const parameter = new URLSearchParams(filter);
   const antwort = await fetch("/api/" + route + (parameter.toString() ? "?" + parameter : ""));
@@ -90,28 +122,35 @@ async function holen(route, filter = zustand.filter) {
   return antwort.json();
 }
 
-// Lädt alle Routen parallel und zeichnet danach alles neu.
+// Lädt alle Routen parallel und zeichnet danach alles neu. Zwei Routen bekommen
+// weniger Filter: der Monatsverlauf ohne Zeitfilter (für Vormonat und Vorjahr),
+// der Hotelvergleich ohne Hotelfilter (beide Hotels nebeneinander).
 async function allesLaden() {
   document.body.classList.add("laedt");
   try {
-    const antworten = await Promise.all(ROUTEN.map((route) => holen(route)));
+    const antworten = await Promise.all([
+      ...ROUTEN.map((route) => holen(route)),
+      holen("monate", filterOhne(ZEITFILTER)),
+      holen("hotels", filterOhne(["hotel"])),
+    ]);
     ROUTEN.forEach((route, i) => (zustand.daten[route] = antworten[i]));
+    zustand.daten.monate = antworten[ROUTEN.length];
+    zustand.daten.hotels_beide = antworten[ROUTEN.length + 1];
     allesZeichnen();
     document.getElementById("fehler").hidden = true;
   } catch (fehler) {
     const kasten = document.getElementById("fehler");
     kasten.textContent = "Daten konnten nicht geladen werden (" + fehler.message + "). Bitte neu laden.";
     kasten.hidden = false;
+    console.error(fehler);
   } finally {
     document.body.classList.remove("laedt");
   }
 }
 
-// Einmalig beim Start: Auswahllisten und der Gesamtbestand als Vergleichsgröße.
+// Einmalig beim Start: die Auswahllisten der Filterleiste.
 async function startdatenLaden() {
-  const [filterwerte, gesamt, monate] = await Promise.all([holen("filterwerte", {}), holen("kennzahlen", {}), holen("monate", {})]);
-  zustand.gesamt = gesamt.daten[0];
-  zustand.gesamtMonate = monateVerdichten(monate.daten);
+  const filterwerte = await holen("filterwerte", {});
   filterleisteFuellen(filterwerte.daten);
 }
 
@@ -119,14 +158,15 @@ async function startdatenLaden() {
 // Filterleiste und Chips
 // ---------------------------------------------------------------------------
 
-// Füllt die Auswahllisten mit den Ausprägungen aus der Datenbank (mit Anzahl Buchungen).
+// Füllt die Auswahllisten mit Klarnamen und Anzahl Buchungen; der Wert bleibt das Kürzel der Datenbank.
 function filterleisteFuellen(zeilen) {
   for (const name of ["hotel", "jahr", "segment", "kanal", "kundentyp", "kaution", "land", "vorlaufzeit"]) {
     const auswahl = document.querySelector(`select[name=${name}]`);
-    const werte = name === "vorlaufzeit"
-      ? [["0-7", "0–7 Tage"], ["8-30", "8–30 Tage"], ["31-90", "31–90 Tage"], ["90+", "über 90 Tage"]]
-      : zeilen.filter((z) => z.filter === name).map((z) => [z.wert, z.wert + " (" + zahl(z.anzahl) + ")"]);
+    let werte = name === "vorlaufzeit"
+      ? ["0-7", "8-30", "31-90", "90+"].map((w) => [w, klarname("vorlaufzeit", w)])
+      : zeilen.filter((z) => z.filter === name).map((z) => [z.wert, klarname(name, z.wert) + " (" + zahl(z.anzahl) + ")"]);
     if (name === "jahr") werte.sort((a, b) => a[0].localeCompare(b[0]));
+    if (name === "land") werte = werte.slice(0, 40); // die 40 größten Länder; die übrigen sind per Klick in der Tabelle erreichbar
     for (const [wert, text] of werte) auswahl.add(new Option(text, wert));
   }
   filterleisteAktualisieren();
@@ -174,58 +214,80 @@ function chipText(name) {
     if (name === "von" && zustand.filter.von === zustand.filter.bis) return "Monat: " + text;
     return (name === "von" ? "ab " : "bis ") + text;
   }
-  if (name === "vorlaufzeit") return "Vorlaufzeit: " + wert + " Tage";
-  return FILTER_TITEL[name] + ": " + wert;
+  return FILTER_TITEL[name] + ": " + klarname(name, wert);
 }
 
 // ---------------------------------------------------------------------------
 // Daten aufbereiten
 // ---------------------------------------------------------------------------
 
-// Fasst Monatszeilen je Hotel zu einer Zeile je Monat zusammen (Summen, daraus Quoten und Mittelwerte).
-function monateVerdichten(zeilen) {
-  const jeHotel = zeilen.map((z) => ({ ...z, datum: monatsdatum(z.jahr, z.monat) }));
-  return d3.groups(jeHotel, (z) => +z.datum).map(([, gruppe]) => {
-    const summe = (feld) => d3.sum(gruppe, (z) => z[feld]);
-    const anzahl = summe("anzahl");
-    return {
-      datum: gruppe[0].datum, jahr: gruppe[0].jahr, monat: gruppe[0].monat, anzahl,
-      stornoquote: summe("stornierungen") / anzahl, adr: summe("adr_summe") / anzahl,
-      erloes: summe("erloes"), erloes_nicht_storniert: summe("erloes_nicht_storniert"), naechte: summe("naechte"),
-      vorlaufzeit: summe("vorlaufzeit_summe") / anzahl, aufenthaltsdauer: summe("naechte") / anzahl,
-      wiederholungsgaeste: summe("wiederholungsgaeste") / anzahl, sonderwuensche: summe("sonderwuensche") / anzahl,
-      gesamterloes: summe("erloes"), zimmernaechte: summe("naechte"), erloes_storniert: summe("erloes") - summe("erloes_nicht_storniert"),
-    };
-  });
+// Bildet aus summierten Rohwerten die zehn Kennzahlen (Quoten und Mittelwerte aus Summen).
+function kennzahlenAus(summen) {
+  const n = summen.anzahl || 0;
+  return {
+    anzahl_buchungen: n,
+    stornoquote: n ? summen.stornierungen / n : null,
+    vorlaufzeit: n ? summen.vorlaufzeit_summe / n : null,
+    aufenthaltsdauer: n ? summen.naechte / n : null,
+    zimmernaechte: summen.naechte,
+    adr: n ? summen.adr_summe / n : null,
+    gesamterloes: summen.erloes,
+    erloes_nicht_storniert: summen.erloes_nicht_storniert,
+    erloes_storniert: (summen.erloes || 0) - (summen.erloes_nicht_storniert || 0),
+    wiederholungsgaeste: n ? summen.wiederholungsgaeste / n : null,
+    sonderwuensche: n ? summen.sonderwuensche / n : null,
+  };
 }
 
-// Fasst Zeilen mit denselben Kennzahlspalten je Schlüssel zusammen (für Tabellen ohne Gruppierung).
-function verdichten(zeilen, schluessel) {
-  return d3.groups(zeilen, (z) => z[schluessel]).map(([wert, gruppe]) => {
-    const summe = (feld) => d3.sum(gruppe, (z) => z[feld]);
-    const anzahl = summe("anzahl");
-    return { [schluessel]: wert, anzahl, stornierungen: summe("stornierungen"), stornoquote: summe("stornierungen") / anzahl,
-      adr: summe("adr_summe") / anzahl, adr_summe: summe("adr_summe"), erloes: summe("erloes"), naechte: summe("naechte") };
+// Summiert Rohwertzeilen (Spalten des KENNZAHLEN-Blocks) zu einer Zeile.
+function summieren(zeilen) {
+  const felder = ["anzahl", "stornierungen", "adr_summe", "erloes", "erloes_nicht_storniert", "naechte", "vorlaufzeit_summe", "wiederholungsgaeste", "sonderwuensche"];
+  return Object.fromEntries(felder.map((f) => [f, d3.sum(zeilen, (z) => z[f])]));
+}
+
+// Fasst Monatszeilen (je Hotel) zu einer Zeile je Monat zusammen, über den ganzen Datensatz;
+// markiert, ob der Monat im Zeitfilter liegt.
+function monateVerdichten(zeilen) {
+  return d3.groups(zeilen, (z) => z.jahr * 100 + z.monat).map(([, gruppe]) => {
+    const datum = monatsdatum(gruppe[0].jahr, gruppe[0].monat);
+    return { datum, jahr: gruppe[0].jahr, monat: gruppe[0].monat, imFilter: imZeitfilter(datum), ...kennzahlenAus(summieren(gruppe)) };
+  }).sort((a, b) => a.datum - b.datum);
+}
+
+// Zeitreihe einer Kennzahl mit Vormonat, Vorjahresmonat und relativen Abweichungen.
+function reihe(monate, feld) {
+  const nachSchluessel = new Map(monate.map((m) => [m.jahr * 100 + m.monat, m[feld]]));
+  return monate.map((m) => {
+    const vormonat = nachSchluessel.get(m.monat === 1 ? (m.jahr - 1) * 100 + 12 : m.jahr * 100 + m.monat - 1) ?? null;
+    const vorjahr = nachSchluessel.get((m.jahr - 1) * 100 + m.monat) ?? null;
+    const wert = m[feld];
+    return { datum: m.datum, jahr: m.jahr, monat: m.monat, imFilter: m.imFilter, wert, vormonat, vorjahr,
+      dVormonat: vormonat ? wert / vormonat - 1 : null, dVorjahr: vorjahr ? wert / vorjahr - 1 : null, bezug: m.bezug };
   });
 }
 
 // Baut den Datenkontext, aus dem Texte, Kacheln und Diagramme entstehen.
 function kontextBilden() {
   const D = zustand.daten;
-  const jeHotel = D.monate.daten.map((z) => ({ ...z, datum: monatsdatum(z.jahr, z.monat) }));
-  const monate = monateVerdichten(D.monate.daten);
+  const monatszeilen = D.monate.daten.filter((z) => !zustand.filter.hotel || z.hotel === zustand.filter.hotel);
+  const monate = monateVerdichten(monatszeilen);
+  const monateImFilter = monate.filter((m) => m.imFilter);
+  const bezug = monateImFilter.at(-1) || monate.at(-1);
+  if (bezug) bezug.bezug = true;
+  const hotels = D.hotels_beide.daten;
+  const hotelvergleich = Object.fromEntries(hotels.map((z) => [z.hotel.replace(" Hotel", ""), kennzahlenAus(z)]));
+  hotelvergleich.beide = kennzahlenAus(summieren(hotels));
   const pivot = D.segment_kundentyp.daten;
-  const jeKundentyp = verdichten(pivot.map((z) => ({ ...z, stornierungen: 0, adr_summe: 0, erloes: 0, naechte: 0 })), "kundentyp");
+  const jeKundentyp = d3.rollups(pivot, (g) => d3.sum(g, (z) => z.anzahl), (z) => z.kundentyp).map(([kundentyp, anzahl]) => ({ kundentyp, anzahl }));
   const laender = D.laender.daten;
   const ausland = laender.filter((z) => z.land !== "PRT");
   return {
-    kennzahlen: D.kennzahlen.daten[0], gesamt: zustand.gesamt, monate, jeHotel,
-    hotels: D.hotels.daten, segmente: D.segmente.daten, kanaele: D.kanaele.daten, kautionen: D.kautionen.daten,
+    kennzahlen: D.kennzahlen.daten[0], monate, monateImFilter, bezug,
+    hotels, hotelvergleich, segmente: D.segmente.daten, kanaele: D.kanaele.daten, kautionen: D.kautionen.daten,
     vorlauf: D.vorlaufzeit.daten, pivot, pivotTop: jeKundentyp.length ? d3.greatest(jeKundentyp, (z) => z.anzahl) : null,
-    erloesDatum: D.erloes_datum.daten.map((z) => ({ ...z, datum: monatsdatum(z.jahr, z.monat) })),
     laender, laenderHotel: D.laender_hotel.daten,
     stornoAusland: d3.sum(ausland, (z) => z.stornierungen) / (d3.sum(ausland, (z) => z.anzahl) || 1),
-    saison: saisonprofil(monate),
+    saison: saisonprofil(monateImFilter),
     zeitraumText: zeitraumText(), filterText: filterText(), gefiltert: Object.keys(zustand.filter).length > 0,
   };
 }
@@ -252,65 +314,100 @@ function allesZeichnen() {
     figur.querySelector(".deutung-text").innerHTML = `<h4>Interpretation</h4><p>${interpretation}</p><h4>Handlungsempfehlung</h4><p>${empfehlung}</p>`;
   }
   kachelnZeichnen(d);
+  hotelvergleichZeichnen(d);
   kennzahlentabelleZeichnen(d);
   zeitverlaufZeichnen(d);
-  zeichnen("saison", (el) => saisonlinien(el, d.monate, { wert: "anzahl", format: zahl, klickMonat: monatSetzen }));
+  saisonZeichnen(d);
   vertriebZeichnen(d);
   stornoZeichnen(d);
+  erloesverlustZeichnen(d);
   herkunftZeichnen(d);
   sqlAnzeigen();
 }
 
-// Vier Kennzahlen als Kacheln, mit dem Gesamtbestand als Vergleich, sobald gefiltert wird.
-function kachelnZeichnen(d) {
-  const k = d.kennzahlen, g = d.gesamt;
-  const definitionen = [
-    ["Anzahl Buchungen", zahl(k.anzahl_buchungen), zahl(g.anzahl_buchungen), ""],
-    ["Stornoquote", prozent(k.stornoquote), prozent(g.stornoquote), "storno"],
-    ["Ø Tagesrate (ADR) in EUR", dezimal(k.adr), dezimal(g.adr), ""],
-    ["Erlös nicht storniert in EUR", zahl(k.erloes_nicht_storniert), zahl(g.erloes_nicht_storniert), ""],
-  ];
-  const kasten = document.getElementById("kacheln");
-  kasten.replaceChildren();
-  for (const [titel, wert, vergleich, klasse] of definitionen) {
-    const kachel = document.createElement("div");
-    kachel.className = "kachel";
-    kachel.innerHTML = `<div class="kachel-titel">${titel}</div><div class="kachel-wert ${klasse}">${k.anzahl_buchungen ? wert : "–"}</div>`
-      + `<div class="kachel-vergleich">${d.gefiltert ? "Gesamtbestand " + vergleich : "Jul 2015 – Aug 2017"}</div>`;
-    kasten.append(kachel);
-  }
+// Eine Abweichung als Text mit Signalfarbe: blau = betriebswirtschaftlich besser, rot = schlechter.
+function abweichungHtml(beschriftung, anteil, hoeherBesser) {
+  const klasse = anteil == null || !isFinite(anteil) || anteil === 0 || hoeherBesser == null ? "wert-neutral"
+    : (hoeherBesser ? anteil > 0 : anteil < 0) ? "wert-besser" : "wert-schlechter";
+  return `<span class="abweichung">${beschriftung} <span class="${klasse}">${abweichungText(anteil)}</span></span>`;
 }
 
-// Grafische Tabelle aller zehn Kennzahlen: Wert, Gesamtbestand, Abweichung, Verlauf mit Minimum und Maximum.
-function kennzahlentabelleZeichnen(d) {
-  const k = d.kennzahlen, g = d.gesamt, m = d.monate;
-  const definitionen = [
-    ["Anzahl Buchungen", "anzahl_buchungen", zahl, "anzahl", "Zeilen der Faktentabelle im gefilterten Bestand"],
-    ["Stornoquote", "stornoquote", prozent, "stornoquote", "Anteil der Buchungen mit is_canceled = 1", "storno"],
-    ["Ø Vorlaufzeit (Tage)", "vorlaufzeit", dezimal1, "vorlaufzeit", "Mittelwert von lead_time"],
-    ["Ø Aufenthaltsdauer (Nächte)", "aufenthaltsdauer", dezimal, "aufenthaltsdauer", "Mittelwert von total_nights"],
-    ["Gebuchte Zimmernächte", "zimmernaechte", zahl, "naechte", "Summe von total_nights; Ersatz für die Auslastung, weil die Kapazität fehlt"],
-    ["Ø ADR (EUR je Nacht)", "adr", dezimal, "adr", "Mittelwert von adr (Average Daily Rate)"],
-    ["Gesamterlös (EUR)", "gesamterloes", zahl, "erloes", "Summe von revenue = adr × total_nights, auch stornierte Buchungen"],
-    ["Erlös nicht stornierter Buchungen (EUR)", "erloes_nicht_storniert", zahl, "erloes_nicht_storniert", "revenue der Buchungen mit is_canceled = 0"],
-    ["Wiederholungsgast-Anteil", "wiederholungsgaeste", prozent, "wiederholungsgaeste", "Anteil der Buchungen mit is_repeated_guest = 1"],
-    ["Anteil mit Sonderwünschen", "sonderwuensche", prozent, "sonderwuensche", "Anteil der Buchungen mit total_of_special_requests > 0"],
+// Sechs Kennzahlen als Kacheln: Wert, Mini-Säulen über alle Monate (gleiche Zeitachse),
+// Abweichung des Bezugsmonats zum Vormonat und zum Vorjahresmonat mit Signal.
+function kachelnZeichnen(d) {
+  const k = d.kennzahlen, kasten = document.getElementById("kacheln");
+  kasten.replaceChildren();
+  for (const kpi of KACHEL_KPIS) {
+    const r = reihe(d.monate, kpi.feld);
+    const b = r.find((z) => z.bezug);
+    const kachel = document.createElement("div");
+    kachel.className = "kachel";
+    kachel.innerHTML = `<div class="kachel-titel">${kpi.titel}</div><div class="kachel-wert ${kpi.klasse || ""}">${k.anzahl_buchungen ? kpi.kachel(k[kpi.feld]) : "–"}</div>`
+      + `<div class="kachel-vergleich">${d.zeitraumText.replace("Anreisen ", "").replace("Anreisejahr ", "").replace("Anreisemonat ", "")}</div>`
+      + `<div class="kachel-verlauf"></div>`
+      + (b ? abweichungHtml("Vormonat", b.dVormonat, kpi.hoeherBesser) + abweichungHtml("Vorjahresmonat", b.dVorjahr, kpi.hoeherBesser) : "");
+    if (r.length > 1) kachel.querySelector(".kachel-verlauf").append(minisaeulen(r, { breite: 200, hoehe: 36, format: kpi.format, farbe: kpi.klasse === "storno" ? FARBE.storno : undefined }));
+    kasten.append(kachel);
+  }
+  const b = d.bezug;
+  document.getElementById("kacheln-hinweis").textContent = b
+    ? `Mini-Säulen: Juli 2015 bis August 2017 ab null, gleiche Zeitachse in allen Kacheln, hell = außerhalb des Zeitfilters. Abweichungen: ${MONATE_LANG[b.monat - 1]} ${b.jahr} gegenüber Vormonat und Vorjahresmonat; blau = betriebswirtschaftlich besser, rot = schlechter, grau = ohne Wertung.`
+    : "";
+}
+
+// Kompakte Vergleichstabelle: Hotels als Zeilen, Kennzahlen als Spalten, Summenzeile "beide Hotels".
+function hotelvergleichZeichnen(d) {
+  const zeilen = d.hotels.map((z, i) => ({ reihenfolge: i, hotel: z.hotel, roh: z, ...kennzahlenAus(z) }));
+  const beide = d.hotelvergleich.beide;
+  const besser = (kpi) => {
+    if (kpi.hoeherBesser == null || zeilen.length < 2) return null;
+    return d3[kpi.hoeherBesser ? "greatest" : "least"](zeilen, (z) => z[kpi.feld])?.hotel;
+  };
+  const spalten = [
+    { feld: "hotel", titel: "Hotel", format: (w) => w, aggregat: () => "beide Hotels" },
+    ...KPIS.slice(0, 8).map((kpi) => ({
+      feld: kpi.feld, titel: kpi.kurztitel, numerisch: true,
+      format: (w, z) => (z.hotel === besser(kpi) ? `<span class="wert-besser">${kpi.format(w)}</span>` : kpi.format(w)),
+      aggregat: () => beide[kpi.feld],
+    })),
   ];
-  const zeilen = definitionen.map(([titel, feld, format, monatsfeld, definition, klasse], i) => {
-    const verlauf = m.map((z) => z[monatsfeld]);
-    return { reihenfolge: i, kennzahl: titel, wert: k[feld], gesamt: g[feld], abweichung: g[feld] ? k[feld] / g[feld] - 1 : null,
-      verlauf, minimum: verlauf.length ? d3.min(verlauf) : null, maximum: verlauf.length ? d3.max(verlauf) : null, format, definition, klasse };
+  tabelleBauen(document.getElementById("tabelle-hotelvergleich"), spalten, zeilen, {
+    sortierung: zustand.sortierung.hotelvergleich, gruppierung: null, summenzeile: true,
+    aktiv: (z) => z.hotel === zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel),
+    beiSortierung: (s) => { zustand.sortierung.hotelvergleich = s; hotelvergleichZeichnen(d); },
+  });
+}
+
+// Grafische Tabelle aller zehn Kennzahlen: je Hotel, beide Hotels, Verlauf als Mini-Säulen,
+// Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat, Minimum und Maximum.
+function kennzahlentabelleZeichnen(d) {
+  const hv = d.hotelvergleich, hotels = d.hotels.map((z) => z.hotel);
+  const zeilen = KPIS.map((kpi, i) => {
+    const r = reihe(d.monate, kpi.feld), b = r.find((z) => z.bezug);
+    const imFilter = r.filter((z) => z.imFilter).map((z) => z.wert);
+    const zeile = { reihenfolge: i, kpi, kennzahl: kpi.titel, definition: kpi.definition, verlauf: r,
+      dVormonat: b?.dVormonat ?? null, dVorjahr: b?.dVorjahr ?? null,
+      minimum: imFilter.length ? d3.min(imFilter) : null, maximum: imFilter.length ? d3.max(imFilter) : null, beide: hv.beide[kpi.feld] };
+    for (const hotel of hotels) zeile[hotel] = hv[hotel.replace(" Hotel", "")]?.[kpi.feld] ?? null;
+    if (hotels.length === 2 && kpi.hoeherBesser != null) {
+      const [a, b2] = hotels.map((h) => zeile[h]);
+      zeile.besser = a == null || b2 == null ? null : (kpi.hoeherBesser ? a >= b2 : a <= b2) ? hotels[0] : hotels[1];
+    }
+    return zeile;
+  });
+  const hotelSpalte = (hotel) => ({
+    feld: hotel, titel: hotel, numerisch: true,
+    format: (w, z) => (z.besser === hotel ? `<span class="wert-besser">${z.kpi.format(w)}</span>` : z.kpi.format(w)),
   });
   const spalten = [
     { feld: "kennzahl", titel: "Kennzahl", format: (w, z) => `${w}<span class="definition">${z.definition}</span>` },
-    { feld: "wert", titel: d.gefiltert ? "Gefilterter Bestand" : "Wert", format: (w, z) => z.format(w), numerisch: true },
-    ...(d.gefiltert ? [
-      { feld: "gesamt", titel: "Gesamtbestand", format: (w, z) => z.format(w), numerisch: true },
-      { feld: "abweichung", titel: "Abweichung", format: (w) => (w > 0 ? "+" : "") + prozent(w), numerisch: true },
-    ] : []),
-    { feld: "verlauf", titel: "Verlauf je Monat", format: () => "", zeichnen: (z) => (z.verlauf.length > 1 ? sparkline(z.verlauf, z.klasse === "storno" ? FARBE.storno : FARBE.balken) : null) },
-    { feld: "minimum", titel: "Minimum", format: (w, z) => z.format(w), numerisch: true },
-    { feld: "maximum", titel: "Maximum", format: (w, z) => z.format(w), numerisch: true },
+    ...hotels.map(hotelSpalte),
+    { feld: "beide", titel: "beide Hotels", numerisch: true, format: (w, z) => z.kpi.format(w) },
+    { feld: "verlauf", titel: "Verlauf je Monat", format: () => "", zeichnen: (z) => (z.verlauf.length > 1 ? minisaeulen(z.verlauf, { breite: 160, hoehe: 30, format: z.kpi.format, farbe: z.kpi.klasse === "storno" ? FARBE.storno : undefined }) : null) },
+    { feld: "dVormonat", titel: "vs. Vormonat", numerisch: true, format: (w, z) => abweichungHtml("", w, z.kpi.hoeherBesser) },
+    { feld: "dVorjahr", titel: "vs. Vorjahresmonat", numerisch: true, format: (w, z) => abweichungHtml("", w, z.kpi.hoeherBesser) },
+    { feld: "minimum", titel: "Minimum", numerisch: true, format: (w, z) => z.kpi.format(w) },
+    { feld: "maximum", titel: "Maximum", numerisch: true, format: (w, z) => z.kpi.format(w) },
   ];
   tabelleBauen(document.getElementById("tabelle-kennzahlen"), spalten, zeilen, {
     sortierung: zustand.sortierung.kennzahlen, gruppierung: null,
@@ -318,29 +415,49 @@ function kennzahlentabelleZeichnen(d) {
   });
 }
 
-// Drei Felder untereinander mit einer Zeitachse: Buchungen, Erlös, Stornoquote – je Hotel eine Linie.
+// Tooltip-Text einer Monatssäule: Wert, Abweichung zum Vormonat und zum Vorjahresmonat.
+function saeulenTipp(titel, format) {
+  return (z) => `${monatstext(z.datum)}\n${titel}: ${format(z.wert)}\nVormonat ${z.vormonat != null ? format(z.vormonat) : "–"}: ${abweichungText(z.dVormonat)}\nVorjahresmonat ${z.vorjahr != null ? format(z.vorjahr) : "–"}: ${abweichungText(z.dVorjahr)}`;
+}
+
+// Drei Säulendiagramme untereinander mit einer Zeitachse: Buchungen, Erlös, Stornoquote;
+// Versatzstück zum Vorjahresmonat blau, wenn besser, rot, wenn schlechter.
 function zeitverlaufZeichnen(d) {
-  const daten = d.jeHotel;
-  if (daten.length < 2) { for (const id of ["zeit-buchungen", "zeit-erloes", "zeit-storno"]) document.getElementById(id).replaceChildren(); return; }
-  const bereich = d3.extent(daten, (z) => z.datum);
-  const gemeinsam = { reihe: "hotel", bereich, farben: HOTELFARBEN, klickMonat: monatSetzen };
-  const feld = (id, titel, bauen) => {
+  const felder = [["zeit-buchungen", "Anzahl Buchungen", "anzahl_buchungen", zahl, true, false],
+    ["zeit-erloes", "Gesamterlös in EUR", "gesamterloes", kurz, true, false],
+    ["zeit-storno", "Stornoquote", "stornoquote", prozent, false, true]];
+  if (d.monate.length < 2) { for (const [id] of felder) document.getElementById(id).replaceChildren(); return; }
+  for (const [id, titel, feld, format, hoeherBesser, achse] of felder) {
+    const r = reihe(d.monate, feld);
     const kasten = document.getElementById(id);
     const ueberschrift = document.createElement("h4"); ueberschrift.textContent = titel;
-    kasten.replaceChildren(ueberschrift, bauen(kasten));
+    kasten.replaceChildren(ueberschrift, saeulen(kasten, r, { format, hoeherBesser, achse, hoehe: achse ? 240 : 210, klickMonat: monatSetzen, tipp: saeulenTipp(titel, format) }));
+  }
+}
+
+// Saisonkurve je Jahr; Tooltip mit Vorjahresvergleich desselben Monats.
+function saisonZeichnen(d) {
+  const m = d.monateImFilter;
+  const nachSchluessel = new Map(m.map((z) => [z.jahr * 100 + z.monat, z.anzahl_buchungen]));
+  const tipp = (z) => {
+    const vorjahr = nachSchluessel.get((z.jahr - 1) * 100 + z.monat);
+    return `${MONATE_LANG[z.monat - 1]} ${z.jahr}: ${zahl(z.anzahl_buchungen)} Buchungen` + (vorjahr ? `\nVorjahresmonat ${zahl(vorjahr)}: ${abweichungText(z.anzahl_buchungen / vorjahr - 1)}` : "");
   };
-  feld("zeit-buchungen", "Anzahl Buchungen", (el) => zeitfeld(el, daten, { ...gemeinsam, wert: "anzahl", format: zahl, achse: false }));
-  feld("zeit-erloes", "Gesamterlös in EUR", (el) => zeitfeld(el, daten, { ...gemeinsam, wert: "erloes", format: kurz, achse: false }));
-  feld("zeit-storno", "Stornoquote", (el) => zeitfeld(el, daten, { ...gemeinsam, wert: "stornoquote", format: prozent, achse: true,
-    farben: { "City Hotel": FARBE.storno, "Resort Hotel": "#d9a58f" }, hoehe: 190 }));
+  zeichnen("saison", (el) => saisonlinien(el, m, { wert: "anzahl_buchungen", format: zahl, klickMonat: monatSetzen, tipp }));
+}
+
+// Tooltip einer Dimensionszeile: Buchungen, Anteil, Stornoquote, Tagesrate.
+function dimensionTipp(dimension, kategorie, gesamt) {
+  return (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})\nStornoquote ${prozent(z.stornoquote)}\nØ Zimmerpreis ${dezimal(z.adr)} EUR\nErlös ${kurz(z.erloes)} EUR`;
 }
 
 // Vertrieb: Marktsegmente, Vertriebskanäle, Tabelle Marktsegment × Kundentyp.
 function vertriebZeichnen(d) {
-  zeichnen("balken-segment", (el) => balken(el, d.segmente, { kategorie: "segment", wert: "anzahl", format: zahl, aktiv: zustand.filter.segment,
-    beiKlick: (z) => filterSetzen("segment", z.segment), zusatz: (z) => "  (" + prozent(z.anzahl / d3.sum(d.segmente, (x) => x.anzahl)) + ")" }));
-  zeichnen("balken-kanal", (el) => balken(el, d.kanaele, { kategorie: "kanal", wert: "erloes", format: kurz, aktiv: zustand.filter.kanal,
-    beiKlick: (z) => filterSetzen("kanal", z.kanal), zusatz: (z) => "  (" + prozent(z.erloes / d3.sum(d.kanaele, (x) => x.erloes)) + ")" }));
+  const segGesamt = d3.sum(d.segmente, (z) => z.anzahl), kanGesamt = d3.sum(d.kanaele, (z) => z.erloes);
+  zeichnen("balken-segment", (el) => balken(el, d.segmente, { kategorie: "segment", wert: "anzahl", format: zahl, klarname: (w) => klarname("segment", w), aktiv: zustand.filter.segment,
+    beiKlick: (z) => filterSetzen("segment", z.segment), zusatz: (z) => "  (" + prozent(z.anzahl / segGesamt) + ")", tipp: dimensionTipp("segment", "segment", segGesamt) }));
+  zeichnen("balken-kanal", (el) => balken(el, d.kanaele, { kategorie: "kanal", wert: "erloes", format: kurz, klarname: (w) => klarname("kanal", w), aktiv: zustand.filter.kanal,
+    beiKlick: (z) => filterSetzen("kanal", z.kanal), zusatz: (z) => "  (" + prozent(z.erloes / kanGesamt) + ")", tipp: dimensionTipp("kanal", "kanal", d3.sum(d.kanaele, (z) => z.anzahl)) }));
   pivotZeichnen(d);
 }
 
@@ -356,8 +473,8 @@ function pivotZeichnen(d) {
   });
   const spalten = [
     ...(gruppierung ? [{ feld: "hotel", titel: "Hotel", format: (w) => w, aggregat: (g) => g[0].hotel }] : []),
-    { feld: "segment", titel: "Marktsegment", format: (w) => w, aggregat: () => "alle Segmente" },
-    ...kundentypen.map((typ) => ({ feld: typ, titel: typ, format: zahl, numerisch: true, balken: true, aggregat: summe(typ) })),
+    { feld: "segment", titel: "Marktsegment", format: (w) => klarname("segment", w), aggregat: () => "alle Segmente" },
+    ...kundentypen.map((typ) => ({ feld: typ, titel: klarname("kundentyp", typ), format: zahl, numerisch: true, balken: true, aggregat: summe(typ) })),
     { feld: "gesamt", titel: "Gesamt", format: zahl, numerisch: true, aggregat: summe("gesamt") },
   ];
   tabelleBauen(document.getElementById("tabelle-pivot"), spalten, zeilen, {
@@ -367,17 +484,23 @@ function pivotZeichnen(d) {
   });
 }
 
-// Stornoquoten auf einer gemeinsamen Skala von 0 bis 100 %, Referenzlinie Gesamtbestand.
+// Stornoquoten untereinander auf einer gemeinsamen Skala 0–100 %, Referenzlinie "insgesamt".
 function stornoZeichnen(d) {
   const referenz = d.kennzahlen.stornoquote;
+  const tipp = (dimension, kategorie) => (z) => `${klarname(dimension, z[kategorie])}\nStornoquote ${prozent(z.stornoquote)} (${zahl(z.stornierungen)} von ${zahl(z.anzahl)} Buchungen)\n`
+    + `${dezimal1(Math.abs(z.stornoquote - referenz) * 100)} Prozentpunkte ${z.stornoquote >= referenz ? "über" : "unter"} der Quote insgesamt`;
   const gemeinsam = { wert: "stornoquote", format: prozent, farbe: FARBE.storno, domain: [0, 1.15], referenz };
-  zeichnen("storno-hotel", (el) => balken(el, d.hotels, { ...gemeinsam, kategorie: "hotel", aktiv: zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel) }));
-  zeichnen("storno-kaution", (el) => balken(el, d.kautionen, { ...gemeinsam, kategorie: "kaution", aktiv: zustand.filter.kaution, beiKlick: (z) => filterSetzen("kaution", z.kaution) }));
-  zeichnen("storno-segment", (el) => balken(el, d.segmente, { ...gemeinsam, kategorie: "segment", aktiv: zustand.filter.segment, beiKlick: (z) => filterSetzen("segment", z.segment) }));
-  zeichnen("storno-vorlaufzeit", (el) => balken(el, d.vorlauf, { ...gemeinsam, kategorie: "vorlaufzeit", sortieren: false, aktiv: zustand.filter.vorlaufzeit, beiKlick: (z) => filterSetzen("vorlaufzeit", z.vorlaufzeit) }));
-  const bereich = d3.extent(d.erloesDatum, (z) => z.datum);
-  zeichnen("erloes-datum", (el) => (d.erloesDatum.length ? zeitfeld(el, d.erloesDatum, { reihe: "datum_art", wert: "erloes", format: kurz, bereich, achse: true, hoehe: 260,
-    farben: { Anreisedatum: FARBE.tinte, Stornodatum: FARBE.storno }, klickMonat: monatSetzen }) : document.createElement("div")));
+  zeichnen("storno-hotel", (el) => balken(el, d.hotels, { ...gemeinsam, kategorie: "hotel", klarname: (w) => klarname("hotel", w), aktiv: zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel), tipp: tipp("hotel", "hotel") }));
+  zeichnen("storno-kaution", (el) => balken(el, d.kautionen, { ...gemeinsam, kategorie: "kaution", klarname: (w) => klarname("kaution", w), aktiv: zustand.filter.kaution, beiKlick: (z) => filterSetzen("kaution", z.kaution), tipp: tipp("kaution", "kaution") }));
+  zeichnen("storno-segment", (el) => balken(el, d.segmente, { ...gemeinsam, kategorie: "segment", klarname: (w) => klarname("segment", w), aktiv: zustand.filter.segment, beiKlick: (z) => filterSetzen("segment", z.segment), tipp: tipp("segment", "segment") }));
+  zeichnen("storno-vorlaufzeit", (el) => balken(el, d.vorlauf, { ...gemeinsam, kategorie: "vorlaufzeit", klarname: (w) => klarname("vorlaufzeit", w), sortieren: false, aktiv: zustand.filter.vorlaufzeit, beiKlick: (z) => filterSetzen("vorlaufzeit", z.vorlaufzeit), tipp: tipp("vorlaufzeit", "vorlaufzeit") }));
+}
+
+// Realisierter und durch Stornierung entgangener Erlös je Anreisemonat als gestapelte Säulen.
+function erloesverlustZeichnen(d) {
+  const daten = d.monate.map((m) => ({ datum: m.datum, imFilter: m.imFilter, realisiert: m.erloes_nicht_storniert || 0, storniert: m.erloes_storniert || 0 }));
+  const tipp = (z) => `${monatstext(z.datum)}\nkalkuliert ${kurz(z.realisiert + z.storniert)} EUR\nrealisiert ${kurz(z.realisiert)} EUR\ndurch Stornierung entgangen ${kurz(z.storniert)} EUR (${prozent(z.storniert / ((z.realisiert + z.storniert) || 1))})`;
+  zeichnen("erloesverlust", (el) => (daten.length ? gestapelteSaeulen(el, daten, { klickMonat: monatSetzen, tipp }) : document.createElement("div")));
 }
 
 // Herkunft: die 15 größten Länder als Balken (plus Rest), alle Länder als Tabelle.
@@ -386,27 +509,28 @@ function herkunftZeichnen(d) {
   const top = l.slice(0, 15).map((z) => ({ ...z }));
   const rest = l.slice(15);
   if (rest.length) top.push({ land: `übrige ${rest.length} Länder`, anzahl: d3.sum(rest, (z) => z.anzahl), rest: true });
+  const tipp = (z) => (z.rest ? `${z.land}: ${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})` : dimensionTipp("land", "land", gesamt)(z));
   zeichnen("balken-laender", (el) => balken(el, top, { kategorie: "land", wert: "anzahl", format: zahl, sortieren: false, aktiv: zustand.filter.land,
-    farbeVon: (z) => (z.rest ? FARBE.balkenHell : FARBE.balken), beiKlick: (z) => { if (!z.rest) filterSetzen("land", z.land); },
-    zusatz: (z) => "  (" + prozent(z.anzahl / gesamt) + ")" }));
+    klarname: (w) => (w.startsWith("übrige") ? w : klarname("land", w)), farbeVon: (z) => (z.rest ? FARBE.balkenHell : FARBE.balken),
+    beiKlick: (z) => { if (!z.rest) filterSetzen("land", z.land); }, zusatz: (z) => "  (" + prozent(z.anzahl / gesamt) + ")", tipp }));
   laendertabelleZeichnen(d);
 }
 
 // Tabelle aller Länder, sortierbar, gruppierbar nach Hotel, mit Datenbalken.
 function laendertabelleZeichnen(d) {
   const gruppierung = zustand.gruppierung.laender;
-  const zeilen = gruppierung ? d.laenderHotel.map((z) => ({ ...z })) : verdichten(d.laenderHotel, "land");
+  const zeilen = gruppierung ? d.laenderHotel.map((z) => ({ ...z })) : d3.groups(d.laenderHotel, (z) => z.land).map(([land, g]) => ({ land, ...summieren(g) }));
   const gesamt = d3.sum(d.laender, (z) => z.anzahl);
-  for (const z of zeilen) z.anteil = z.anzahl / gesamt;
+  for (const z of zeilen) { z.anteil = z.anzahl / gesamt; z.stornoquote = z.anzahl ? z.stornierungen / z.anzahl : null; z.adr = z.anzahl ? z.adr_summe / z.anzahl : null; z.name = klarname("land", z.land); }
   const spalten = [
     ...(gruppierung ? [{ feld: "hotel", titel: "Hotel", format: (w) => w, aggregat: (g) => g[0].hotel }] : []),
-    { feld: "land", titel: "Land", format: (w) => w, aggregat: (g) => g.length + " Länder" },
+    { feld: "name", titel: "Land", format: (w, z) => `${w} <span class="definition-inline">${z.land}</span>`, aggregat: (g) => g.length + " Länder" },
     { feld: "anzahl", titel: "Buchungen", format: zahl, numerisch: true, balken: true, aggregat: summe("anzahl") },
     { feld: "anteil", titel: "Anteil", format: prozent, numerisch: true, aggregat: (g) => summe("anzahl")(g) / gesamt },
     { feld: "naechte", titel: "Zimmernächte", format: zahl, numerisch: true, balken: true, aggregat: summe("naechte") },
-    { feld: "erloes", titel: "Erlös (EUR)", format: zahl, numerisch: true, balken: true, aggregat: summe("erloes") },
+    { feld: "erloes", titel: "Erlös in €", format: zahl, numerisch: true, balken: true, aggregat: summe("erloes") },
     { feld: "stornoquote", titel: "Stornoquote", format: prozent, numerisch: true, balken: true, klasse: "storno", aggregat: quote("stornierungen", "anzahl") },
-    { feld: "adr", titel: "Ø ADR", format: dezimal, numerisch: true, aggregat: quote("adr_summe", "anzahl") },
+    { feld: "adr", titel: "Ø ADR in €", format: dezimal, numerisch: true, aggregat: quote("adr_summe", "anzahl") },
   ];
   tabelleBauen(document.getElementById("tabelle-laender"), spalten, zeilen, {
     sortierung: zustand.sortierung.laender, gruppierung: gruppierung || null,
@@ -428,8 +552,8 @@ function zeichnen(id, bauen) {
 
 // Lädt die Ländertabelle als CSV herunter (deutsches Format: Semikolon, Komma als Dezimalzeichen).
 function csvExport() {
-  const zeilen = [["land", "buchungen", "zimmernaechte", "erloes", "stornoquote", "adr"].join(";")];
-  for (const z of zustand.daten.laender.daten) zeilen.push([z.land, z.anzahl, z.naechte, z.erloes, z.stornoquote, z.adr].map((w) => String(w).replace(".", ",")).join(";"));
+  const zeilen = [["code", "land", "buchungen", "zimmernaechte", "erloes", "stornoquote", "adr"].join(";")];
+  for (const z of zustand.daten.laender.daten) zeilen.push([z.land, klarname("land", z.land), z.anzahl, z.naechte, z.erloes, z.stornoquote, z.adr].map((w) => String(w).replace(".", ",")).join(";"));
   const datei = new Blob(["﻿" + zeilen.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(datei); link.download = "herkunftslaender.csv"; link.click();

@@ -36,17 +36,17 @@ function kurz(wert) {
   return ZAHL.format(wert);
 }
 
-// Monat aus Jahr und Monatszahl als Datum (erster Tag).
+// Monat aus Jahr und Monatszahl als Datum (erster Tag, UTC – so rechnet auch Observable Plot).
 function monatsdatum(jahr, monat) {
-  return new Date(jahr, monat - 1, 1);
+  return new Date(Date.UTC(jahr, monat - 1, 1));
 }
 
 // Datum als "Jul 2015".
 function monatstext(datum) {
-  return MONATE_KURZ[datum.getMonth()] + " " + datum.getFullYear();
+  return MONATE_KURZ[datum.getUTCMonth()] + " " + datum.getUTCFullYear();
 }
 
 // Datum als "2015-07" für die Filter von/bis.
 function monatsschluessel(datum) {
-  return datum.getFullYear() + "-" + String(datum.getMonth() + 1).padStart(2, "0");
+  return datum.getUTCFullYear() + "-" + String(datum.getUTCMonth() + 1).padStart(2, "0");
 }

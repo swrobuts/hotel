@@ -15,17 +15,19 @@ Power-BI-Referenzlösung. Es ist zugleich das Lehrbeispiel für die Arbeitsteilu
 
 | | |
 |---|---|
-| Auf einen Blick | vier Kacheln (Buchungen, Stornoquote, Ø ADR, Erlös nicht storniert) mit dem Gesamtbestand als Vergleich, sobald gefiltert wird; darunter die grafische Tabelle aller zehn Katalog-Kennzahlen mit Verlauf je Monat, Minimum und Maximum (die Skala jeder Zeile steht daneben) |
-| Zeitverlauf | Buchungen, Erlös und Stornoquote **untereinander** auf einer gemeinsamen Zeitachse, je Hotel eine Linie mit Wert am Linienende; Saisonkurve je Jahr |
-| Vertrieb | Buchungen nach Marktsegment, Erlös nach Vertriebskanal (mit Anteilen), Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
-| Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit auf **einer Skala 0–100 %** mit Referenzlinie „Gesamt"; Erlös je Monat nach Anreise- und nach Stornodatum |
+| Auf einen Blick | sechs Kacheln (Gesamterlös, Buchungen, Stornoquote, Ø Zimmerpreis, Ø Vorlaufzeit, Ø Aufenthalt) mit Mini-Säulen über alle Monate (gleiche Zeitachse, ab null) und der Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat — blau = betriebswirtschaftlich besser, rot = schlechter; Hotelvergleich (Hotels als Zeilen, Summenzeile „beide Hotels", bessere Werte markiert); Kennzahlentabelle mit den zehn Katalog-Kennzahlen je Hotel, Verlauf, Abweichungen, Minimum und Maximum |
+| Zeitverlauf | Buchungen, Erlös und Stornoquote als Säulen **untereinander** auf einer Zeitachse; Versatzstück zum Vorjahresmonat nach IBCS (gefüllt = Zuwachs, Umriss = Fehlbetrag; blau besser, rot schlechter); Saisonkurve je Jahr |
+| Vertrieb | Buchungen nach Marktsegment, Erlös nach Vertriebskanal (mit Anteilen und Führungslinien), Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
+| Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit untereinander auf **einer Skala 0–100 %** mit Referenzlinie „insgesamt"; realisierter und durch Stornierung entgangener Erlös je Monat |
 | Herkunft | die 15 größten Länder als Balken (übrige zusammengefasst), alle Länder als sortierbare, nach Hotel gruppierbare Tabelle mit Datenbalken und CSV-Export |
-| Filter | Hotel, Anreisejahr, Zeitraum (Monat ab/bis), Marktsegment, Vertriebskanal, Kundentyp, Kautionstyp, Land, Vorlaufzeit — als Auswahllisten und per Klick in jedes Diagramm (Kreuzfilterung); aktive Filter als abwählbare Chips; der Zustand steht in der Adresse („Link mit Filterzustand kopieren") |
-| Texte | je Abschnitt ein Leitsatz mit dem Befund; je Figur eine Aussage mit Zeitbezug, eine Beschreibung (Messgröße, Einheit, Zeitraum, Filter) und aufklappbar **Interpretation** und **Handlungsempfehlung**, aus den Daten formuliert; „SQL anzeigen" mit der Abfrage samt Parametern |
+| Interaktion | Hover oder Tippen auf jede Säule, jeden Balken und jede Linie zeigt Wert, Abweichung zum Vormonat und Vorjahresmonat bzw. Anteil, Stornoquote und Abstand zur Gesamtquote; Klick setzt den Filter für alle Diagramme (Kreuzfilterung) |
+| Filter | Hotel, Anreisejahr, Zeitraum (Monat ab/bis), Marktsegment, Vertriebskanal, Kundentyp, Kautionstyp, Land, Vorlaufzeit; aktive Filter als abwählbare Chips; der Zustand steht in der Adresse („Link mit Filterzustand kopieren"). Monate außerhalb des Zeitfilters bleiben hell sichtbar, damit Vormonat und Vorjahr vergleichbar bleiben |
+| Texte | je Abschnitt ein Leitsatz; je Figur eine Aussage mit Zeitbezug, eine Beschreibung (Messgröße, Einheit, Zeitraum, Filter) und aufklappbar **Interpretation** und **Handlungsempfehlung**, aus den Daten formuliert; „SQL anzeigen" mit der Abfrage samt Parametern |
+| Klarnamen | alle Kürzel des Datensatzes werden übersetzt (Marktsegmente, Kanäle, Kundentypen, Kautionstypen, Ländernamen aus ISO-3-Codes); Filter und SQL arbeiten weiter mit den Originalwerten |
 
 Gegenüber der Power-BI-Lösung kommen hinzu: SQL-Anzeige, teilbarer Filterzustand,
-Interpretation und Handlungsempfehlung je Figur, Kennzahlentabelle mit Verlauf,
-Gruppierung in Tabellen.
+Interpretation und Handlungsempfehlung je Figur, Vorjahres- und Vormonatsvergleich
+mit Signalfarben, Hotelvergleich, Gruppierung in Tabellen.
 
 ## Gestaltung
 
@@ -78,8 +80,9 @@ docker run -p 8765:8000 hotel-dashboard
 | `backend/app/main.py` | FastAPI-Routen unter `/api/…`, `/health`, statisches Frontend |
 | `backend/tests/test_abfragen.py` | Kontrollwerte und Routen |
 | `frontend/index.html`, `style.css` | Seite und Gestaltung |
+| `frontend/bezeichnungen.js`, `laendernamen.js` | Klarnamen für Kürzel und ISO-3-Ländercodes |
 | `frontend/app.js` | Filterzustand, Adresse, Laden, Datenaufbereitung, Abschnitte |
-| `frontend/diagramme.js` | ein Diagramm je Funktion mit Observable Plot (Balken, Zeitfeld, Saisonlinien, Sparkline) |
+| `frontend/diagramme.js` | ein Diagramm je Funktion mit Observable Plot (Balken mit Führungslinien, Säulen mit Versatzstück, gestapelte Säulen, Saisonlinien, Mini-Säulen) |
 | `frontend/tabelle.js` | sortierbare, gruppierbare Tabelle mit Datenbalken |
 | `frontend/texte.js` | Leitsätze, Aussagen, Interpretationen und Handlungsempfehlungen aus den Daten |
 | `frontend/format.js` | deutsche Zahlen- und Monatsformate |
