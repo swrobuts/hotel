@@ -2,52 +2,52 @@
 """
 02_load_data.py
 ================================================================================
-Ladeskript fuer das BI-Lehrprojekt "Hotel Booking Demand" (Sternschema).
+Ladeskript für das BI-Lehrprojekt "Hotel Booking Demand" (Sternschema).
 
-Liest die finalen CSV-Dateien aus dem Ordner data/ und laedt sie in die
+Liest die finalen CSV-Dateien aus dem Ordner data/ und lädt sie in die
 Tabellen, die von 01_schema.sql im Schema "hotel_bi" angelegt wurden.
 
 VORAUSSETZUNGEN (pip install):
 --------------------------------------------------------------------------
     pip install pandas psycopg2-binary sqlalchemy
 
-    (psycopg2-binary reicht fuer normale Nutzung/Lehrzwecke aus;
-    fuer produktive Systeme ggf. psycopg2 aus dem Quellcode kompilieren.)
+    (psycopg2-binary reicht für normale Nutzung/Lehrzwecke aus;
+    für produktive Systeme ggf. psycopg2 aus dem Quellcode kompilieren.)
 
 VERBINDUNG ZUR DATENBANK:
 --------------------------------------------------------------------------
-Die Verbindung wird ausschliesslich ueber die Umgebungsvariable
+Die Verbindung wird ausschließlich über die Umgebungsvariable
 DATABASE_URL aufgebaut, z.B.:
 
-    export DATABASE_URL="postgresql://postgres:MEIN_PASSWORT@vps-host:5432/postgres"
+    export DATABASE_URL="postgresql://postgres:MEIN_PASSWORT@supabase.butscher.cloud:5433/hotel"
 
 Bei self-hosted Supabase entspricht das dem POSTGRES_PASSWORD aus der
 .env-Datei des Docker-Compose-Setups (siehe docs/Supabase_Setup_VPS.md).
 
-REIHENFOLGE DES LADENS (wichtig wegen Fremdschluessel-Constraints):
+REIHENFOLGE DES LADENS (wichtig wegen Fremdschlüssel-Constraints):
 --------------------------------------------------------------------------
 1. Zuerst ALLE Dimensionstabellen (dim_*), da die Faktentabelle
-   Fremdschluessel (FOREIGN KEY) auf diese Tabellen besitzt.
+   Fremdschlüssel (FOREIGN KEY) auf diese Tabellen besitzt.
 2. Danach die Faktentabelle (fact_bookings), da sie von den
-   Dimensionen abhaengt.
+   Dimensionen abhängt.
 
 IDEMPOTENZ:
 --------------------------------------------------------------------------
-Das Skript fuehrt vor jedem Laden ein TRUNCATE der Zieltabelle aus,
+Das Skript führt vor jedem Laden ein TRUNCATE der Zieltabelle aus,
 damit es beliebig oft wiederholt werden kann, ohne Duplikate zu
 erzeugen ("idempotent"). Das bedeutet: ALLE vorher in diesen Tabellen
-gespeicherten Daten werden geloescht und durch den aktuellen Inhalt
+gespeicherten Daten werden gelöscht und durch den aktuellen Inhalt
 der CSV-Dateien ersetzt!
---> Bitte nur ausfuehren, wenn das so gewuenscht ist (z.B. beim
-    (Neu-)Aufsetzen der Uebungsdatenbank). Fuer produktive Daten ist
+--> Bitte nur ausführen, wenn das so gewünscht ist (z.B. beim
+    (Neu-)Aufsetzen der Übungsdatenbank). Für produktive Daten ist
     ein TRUNCATE-basierter Full-Reload NICHT geeignet.
 
-AUSFUEHRUNG:
+AUSFÜHRUNG:
 --------------------------------------------------------------------------
-    export DATABASE_URL="postgresql://postgres:PASSWORT@HOST:5432/postgres"
+    export DATABASE_URL="postgresql://postgres:PASSWORT@supabase.butscher.cloud:5433/hotel"
     python 02_load_data.py
 
-    Optional: Pfad zum Datenordner ueber --data-dir angeben
+    Optional: Pfad zum Datenordner über --data-dir angeben
     (Standard: ../data relativ zu diesem Skript).
 ================================================================================
 """
@@ -84,20 +84,20 @@ SCHEMA = "hotel_bi"
 
 # Spalten der Faktentabelle, die als BOOLEAN in Postgres angelegt sind,
 # in den CSV-Dateien aber als 0/1 (int) vorliegen und daher vor dem
-# Laden umgewandelt werden muessen.
+# Laden umgewandelt werden müssen.
 FACT_BOOLEAN_COLUMNS = ["is_canceled", "is_repeated_guest"]
 
 
 def get_engine():
-    """Baut die Datenbankverbindung ausschliesslich ueber DATABASE_URL auf."""
+    """Baut die Datenbankverbindung ausschließlich über DATABASE_URL auf."""
     database_url = os.environ.get("DATABASE_URL")
     if not database_url:
         sys.exit(
             "FEHLER: Umgebungsvariable DATABASE_URL ist nicht gesetzt.\n"
             "Beispiel:\n"
-            '  export DATABASE_URL="postgresql://postgres:PASSWORT@HOST:5432/postgres"'
+            '  export DATABASE_URL="postgresql://postgres:PASSWORT@supabase.butscher.cloud:5433/hotel"'
         )
-    # sqlalchemy erwartet das Praefix "postgresql://" (nicht "postgres://")
+    # sqlalchemy erwartet das Präfix "postgresql://" (nicht "postgres://")
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
     return create_engine(database_url)
@@ -112,10 +112,10 @@ def load_dataframe(csv_path: Path) -> pd.DataFrame:
 def truncate_table(conn, table_name: str):
     """Leert die Zieltabelle vor dem Neuladen (idempotentes Verhalten).
 
-    BESTAETIGUNG: Mit dem Aufruf dieses Skripts bestaetigt der/die
-    Ausfuehrende, dass alle vorhandenen Daten in hotel_bi.<table_name>
-    geloescht und durch den Inhalt der aktuellen CSV-Datei ersetzt
-    werden sollen (CASCADE, um abhaengige Fremdschluessel-Zeilen mit
+    BESTÄTIGUNG: Mit dem Aufruf dieses Skripts bestätigt der/die
+    Ausführende, dass alle vorhandenen Daten in hotel_bi.<table_name>
+    gelöscht und durch den Inhalt der aktuellen CSV-Datei ersetzt
+    werden sollen (CASCADE, um abhängige Fremdschlüssel-Zeilen mit
     zu leeren, z.B. fact_bookings beim Leeren einer Dimension).
     """
     print(f"  -> TRUNCATE {SCHEMA}.{table_name} (CASCADE) ...")
@@ -123,11 +123,11 @@ def truncate_table(conn, table_name: str):
 
 
 def copy_dataframe(conn, df: pd.DataFrame, table_name: str):
-    """Laedt einen DataFrame per COPY (schnell, fuer grosse Tabellen wie
+    """Lädt einen DataFrame per COPY (schnell, für große Tabellen wie
     fact_bookings geeignet) in die Zieltabelle. Nutzt die raw DBAPI-
-    Verbindung von psycopg2 fuer den COPY-Befehl."""
+    Verbindung von psycopg2 für den COPY-Befehl."""
     buffer = io.StringIO()
-    # NaN/NULL sauber als leeren String fuer COPY markieren
+    # NaN/NULL sauber als leeren String für COPY markieren
     df.to_csv(buffer, index=False, header=False, na_rep="\\N")
     buffer.seek(0)
 
@@ -173,7 +173,7 @@ def load_table(engine, data_dir: Path, file_stem: str, table_name: str):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Laedt die Hotel-Booking-CSV-Dateien in das hotel_bi-Sternschema."
+        description="Lädt die Hotel-Booking-CSV-Dateien in das hotel_bi-Sternschema."
     )
     default_data_dir = Path(__file__).resolve().parent.parent / "data"
     parser.add_argument(
@@ -187,7 +187,7 @@ def main():
     engine = get_engine()
 
     print("=" * 70)
-    print("Lade Dimensionstabellen (muessen vor der Faktentabelle geladen werden)")
+    print("Lade Dimensionstabellen (müssen vor der Faktentabelle geladen werden)")
     print("=" * 70)
     for file_stem, table_name in DIMENSION_TABLES:
         load_table(engine, args.data_dir, file_stem, table_name)
