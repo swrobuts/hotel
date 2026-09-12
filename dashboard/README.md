@@ -1,8 +1,9 @@
 # Interaktives Dashboard
 
-Live: **<https://hotel-dashboard-cuoi.onrender.com>** (Render, Free-Plan: nach 15
+Live: **<https://hotel.butscher.cloud>** (eigener Server, antwortet sofort) und
+**<https://hotel-dashboard-cuoi.onrender.com>** (Render, Free-Plan: nach 15
 Minuten ohne Aufruf schläft der Dienst ein, der erste Aufruf danach dauert bis zu
-einer Minute).
+einer Minute). Beide Instanzen bauen aus demselben Stand von `main`.
 
 Das Dashboard liest bei jedem Filterwechsel live aus der Datenbank `hotel`
 (Rolle `studi_hotel`) und zeigt dieselben Kennzahlen wie das Notebook und die
@@ -117,6 +118,20 @@ Reihe für das Statusdatum.
 Eingerichtet am 12.09.2026 als Blueprint „hotel" im Render-Konto; jeder Push
 auf `main` baut neu. Für eine eigene Instanz: auf render.com *New → Blueprint*,
 Repo verbinden, *Deploy Blueprint*.
+
+## Deploy auf dem eigenen Server
+
+Dieselbe Anwendung läuft zusätzlich als Docker-Container auf einem eigenen VPS
+hinter dem Reverse-Proxy Traefik, der das TLS-Zertifikat von Let's Encrypt holt.
+Auf dem Server liegen unter `/root/hotel-dashboard/` eine `docker-compose.yml`
+(baut `src/dashboard/Dockerfile`, Traefik-Labels für `hotel.butscher.cloud`,
+Weiterleitung von HTTP auf HTTPS), ein Klon dieses Repos in `src/` und das
+Skript `update.sh`. Ein Cron-Eintrag ruft `update.sh` alle zehn Minuten auf;
+das Skript holt `main` und baut den Container nur, wenn sich der Stand geändert
+hat (`update.sh --force` erzwingt den Neubau). Ein Push auf `main` ist damit
+nach höchstens zehn Minuten plus Bauzeit online. `DATABASE_URL` ist nicht
+gesetzt, der Container nutzt wie auf Render den Rückfall auf die Rolle
+`studi_hotel`.
 
 ## Hinweise
 
