@@ -7,10 +7,10 @@ Grundgerüst selbst auf und vergleichen ihr Ergebnis mit dieser Lösung.
 
 Geprüft mit Power BI Desktop 2.152 (März 2026).
 
-> **Stand 12.09.2026, abends:** Die Measures im Projekt (`Hotel.pbip`) sind auf
-> die Begriffe Umsatz / Gebuchter Umsatz / Durch Stornierung entgangener Umsatz
-> umbenannt. `Hotel.pbix` trägt noch die alten Namen (Gesamterlös, Erlös …), bis
-> sie in Power BI Desktop neu gespeichert wird.
+> **Stand 12.09.2026:** Die Measures im Projekt (`Hotel.pbip`) heißen Umsatz,
+> Gebuchter Umsatz und Durch Stornierung entgangener Umsatz. `Hotel.pbix` trägt
+> noch die früheren Namen (Gesamterlös, Erlös …); die Pflege der PBIX übernimmt
+> Robert selbst.
 
 ## Öffnen
 
