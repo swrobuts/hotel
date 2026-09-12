@@ -15,25 +15,31 @@ Power-BI-Referenzlösung. Es ist zugleich das Lehrbeispiel für die Arbeitsteilu
 
 | | |
 |---|---|
-| Kennzahlen | die zehn Kennzahlen des Katalogs als Kacheln, jede mit Sparkline über die Anreisemonate und dem Gesamtbestand als Vergleich, sobald ein Filter aktiv ist |
-| Diagramme | Buchungen und Erlös je Anreisemonat (je Hotel); Buchungen nach Marktsegment; Erlös nach Vertriebskanal; Marktsegment × Kundentyp als Small Multiples; Stornoquote nach Hotel, Marktsegment, Kautionstyp und Vorlaufzeit mit Referenzlinie „Gesamt"; Erlös je Monat nach Anreise- und nach Stornodatum; Buchungen je Monat und Jahr; Weltkarte, Top 10 und Tabelle der Herkunftsländer |
-| Filter | Hotel, Anreisejahr, Zeitraum (Monat ab/bis), Marktsegment, Vertriebskanal, Kundentyp, Kautionstyp, Land, Vorlaufzeit — als Auswahllisten und per Klick in jedes Diagramm (Kreuzfilterung); aktive Filter als abwählbare Chips |
-| Aussage-Titel | jeder Diagrammtitel nennt den Befund im gefilterten Bestand, z. B. „Stornoquote steigt mit der Vorlaufzeit – 9,6 % bei 0-7 Tagen, 50,7 % bei 90+ Tagen" |
-| Teilen | der Filterzustand steht in der Adresse, „Link kopieren" übernimmt ihn |
-| Nachvollziehen | „SQL anzeigen" unter jedem Diagramm zeigt die Abfrage samt Parametern |
-| Export | Ländertabelle als CSV, sortierbar per Klick auf die Spaltenüberschrift |
+| Auf einen Blick | vier Kacheln (Buchungen, Stornoquote, Ø ADR, Erlös nicht storniert) mit dem Gesamtbestand als Vergleich, sobald gefiltert wird; darunter die grafische Tabelle aller zehn Katalog-Kennzahlen mit Verlauf je Monat, Minimum und Maximum (die Skala jeder Zeile steht daneben) |
+| Zeitverlauf | Buchungen, Erlös und Stornoquote **untereinander** auf einer gemeinsamen Zeitachse, je Hotel eine Linie mit Wert am Linienende; Saisonkurve je Jahr |
+| Vertrieb | Buchungen nach Marktsegment, Erlös nach Vertriebskanal (mit Anteilen), Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
+| Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit auf **einer Skala 0–100 %** mit Referenzlinie „Gesamt"; Erlös je Monat nach Anreise- und nach Stornodatum |
+| Herkunft | die 15 größten Länder als Balken (übrige zusammengefasst), alle Länder als sortierbare, nach Hotel gruppierbare Tabelle mit Datenbalken und CSV-Export |
+| Filter | Hotel, Anreisejahr, Zeitraum (Monat ab/bis), Marktsegment, Vertriebskanal, Kundentyp, Kautionstyp, Land, Vorlaufzeit — als Auswahllisten und per Klick in jedes Diagramm (Kreuzfilterung); aktive Filter als abwählbare Chips; der Zustand steht in der Adresse („Link mit Filterzustand kopieren") |
+| Texte | je Abschnitt ein Leitsatz mit dem Befund; je Figur eine Aussage mit Zeitbezug, eine Beschreibung (Messgröße, Einheit, Zeitraum, Filter) und aufklappbar **Interpretation** und **Handlungsempfehlung**, aus den Daten formuliert; „SQL anzeigen" mit der Abfrage samt Parametern |
 
-Gegenüber der Power-BI-Lösung kommen hinzu: Weltkarte ohne Anmeldung, SQL-Anzeige,
-teilbarer Filterzustand, Sparklines in den Kacheln, Aussage-Titel.
+Gegenüber der Power-BI-Lösung kommen hinzu: SQL-Anzeige, teilbarer Filterzustand,
+Interpretation und Handlungsempfehlung je Figur, Kennzahlentabelle mit Verlauf,
+Gruppierung in Tabellen.
 
 ## Gestaltung
 
-Nach Tufte, Few und Hichert: wenig Tinte ohne Daten (keine Rahmen, kein
-Farbhintergrund, Gitterlinien nur wo sie Werte ablesbar machen), Werte direkt am
-Balken statt auf einer Achse, Linien enden mit ihrer Beschriftung statt in einer
-Legende, eine Farbe je Bedeutung — Grau für Mengen und Beträge, Rotbraun für
-alles, was Stornierungen misst, Petrol für die aktive Auswahl —, Referenzlinien
-für den Gesamtbestand, Small Multiples statt gestapelter Balken.
+Nach Tufte, Few, Hichert (IBCS) und Bissantz:
+
+* **Aussage zuerst:** Titel nennt den Befund mit Zeitbezug, die Beschreibung darunter Messgröße, Einheit, Zeitraum und Filter; nur zwei Textebenen (Datawrapper-Regel).
+* **Gleiche Skalen, wo verglichen wird:** die vier Stornoquoten-Diagramme teilen eine Skala; Kennzahlen mit verschiedenen Einheiten stehen untereinander auf einer Zeitachse, nie nebeneinander (Bissantz: Kennzahlen untereinander).
+* **Fluchten:** alle Balkendiagramme haben dieselbe Beschriftungsbreite, sodass Balken und Werte über die Seite hinweg in einer Linie stehen; eine Spalte, 32 px Abstand, 64 px zwischen Abschnitten.
+* **Wenig Tinte ohne Daten:** keine Rahmen und Achsen, wo Werte am Balken stehen; Gitterlinien nur bei Zeitreihen; Linien enden mit ihrer Beschriftung statt in einer Legende.
+* **Eine Farbe je Bedeutung:** Grau für Mengen und Beträge, Rotbraun für Stornierungen, Petrol für die aktive Auswahl.
+* **Tabellen als grafische Tabellen:** Zahlen rechtsbündig, Datenbalken relativ zum Spaltenmaximum, Sparklines mit explizitem Minimum und Maximum, Gruppenzeilen mit Zwischensummen.
+* **Telefon:** eine Spalte, kleinere Ränder, Tabellen zeigen die tragenden Spalten, der Rest ist rollbar.
+
+Quellen: IBCS-SUCCESS-Regeln (Say, Unify, Condense, Check, Express, Simplify, Structure); Datawrapper, *What to consider when using text in data visualizations*; Few, *Common Pitfalls in Dashboard Design*; Bissantz, *Bella berät – 75 Regeln für bessere Visualisierung*.
 
 ## Lokal starten
 
@@ -72,10 +78,11 @@ docker run -p 8765:8000 hotel-dashboard
 | `backend/app/main.py` | FastAPI-Routen unter `/api/…`, `/health`, statisches Frontend |
 | `backend/tests/test_abfragen.py` | Kontrollwerte und Routen |
 | `frontend/index.html`, `style.css` | Seite und Gestaltung |
-| `frontend/app.js` | Filterzustand, Adresse, Laden, Kacheln, Tabelle, Export |
-| `frontend/diagramme.js` | ein Diagramm je Funktion mit Observable Plot |
+| `frontend/app.js` | Filterzustand, Adresse, Laden, Datenaufbereitung, Abschnitte |
+| `frontend/diagramme.js` | ein Diagramm je Funktion mit Observable Plot (Balken, Zeitfeld, Saisonlinien, Sparkline) |
+| `frontend/tabelle.js` | sortierbare, gruppierbare Tabelle mit Datenbalken |
+| `frontend/texte.js` | Leitsätze, Aussagen, Interpretationen und Handlungsempfehlungen aus den Daten |
 | `frontend/format.js` | deutsche Zahlen- und Monatsformate |
-| `frontend/daten/welt-110m.json` | Weltkarte (TopoJSON, Natural Earth 1:110 Mio., Kennung ISO-3) |
 | `Dockerfile`, `../render.yaml` | Container und Render-Blueprint |
 
 ### Routen
@@ -90,8 +97,9 @@ antworten mit `{"daten": [...], "sql": "...", "parameter": {...}}`.
 | `/api/kennzahlen` | die zehn Kennzahlen des Katalogs, eine Zeile |
 | `/api/monate` | Kennzahlen je Anreisemonat und Hotel |
 | `/api/hotels`, `/api/segmente`, `/api/kanaele`, `/api/kautionen`, `/api/laender` | Kennzahlen je Ausprägung der Dimension |
+| `/api/laender_hotel` | Kennzahlen je Herkunftsland und Hotel (Gruppierung der Tabelle) |
 | `/api/vorlaufzeit` | Kennzahlen je Vorlaufzeit-Bucket (0-7, 8-30, 31-90, 90+ Tage) |
-| `/api/segment_kundentyp` | Anzahl Buchungen je Marktsegment und Kundentyp |
+| `/api/segment_kundentyp` | Anzahl Buchungen je Marktsegment, Kundentyp und Hotel |
 | `/api/erloes_datum` | Erlös je Monat nach Anreisedatum und nach Datum des Reservierungsstatus |
 
 Filterparameter: `hotel`, `jahr`, `von`, `bis` (Monate als `JJJJ-MM`), `segment`,
@@ -109,9 +117,8 @@ Repo verbinden, *Deploy Blueprint*.
 
 ## Hinweise
 
-* Die Karte zeigt Länder nach ISO-3-Code; „CN" aus dem Datensatz wird als
-  China gezeigt, Kleinstaaten (SGP, HKG, MLT …) haben bei 1:110 Mio. keine
-  Fläche und erscheinen nur in der Tabelle.
+* Ländercodes wie im Datensatz (ISO 3166-1 alpha-3); „CN" steht dort für
+  China, „UNK" für unbekannt.
 * Die Datenbankverbindung ist unverschlüsselt (siehe
   `../docs/Supabase_Setup_VPS.md`); der Zugang ist lesend und die Daten sind
   öffentlich.
