@@ -427,11 +427,11 @@ function zeitverlaufZeichnen(d) {
     ["zeit-erloes", "Gesamterlös in EUR", "gesamterloes", kurz, true, false],
     ["zeit-storno", "Stornoquote", "stornoquote", prozent, false, true]];
   if (d.monate.length < 2) { for (const [id] of felder) document.getElementById(id).replaceChildren(); return; }
-  for (const [id, titel, feld, format, hoeherBesser, achse] of felder) {
+  for (const [id, titel, feld, format, hoeherBesser] of felder) {
     const r = reihe(d.monate, feld);
     const kasten = document.getElementById(id);
     const ueberschrift = document.createElement("h4"); ueberschrift.textContent = titel;
-    kasten.replaceChildren(ueberschrift, saeulen(kasten, r, { format, hoeherBesser, achse, hoehe: achse ? 240 : 210, klickMonat: monatSetzen, tipp: saeulenTipp(titel, format) }));
+    kasten.replaceChildren(ueberschrift, saeulen(kasten, r, { format, hoeherBesser, hoehe: 230, klickMonat: monatSetzen, tipp: saeulenTipp(titel, format) }));
   }
 }
 

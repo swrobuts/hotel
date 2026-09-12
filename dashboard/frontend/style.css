@@ -51,9 +51,9 @@ header.kopf nav a:hover, header.kopf nav button:hover { text-decoration: underli
 section { margin-top: 64px; }
 section > h2 { font-size: 20px; font-weight: 650; color: var(--tinte); margin: 0 0 8px; }
 section > .lead { max-width: 900px; margin: 0 0 24px; color: var(--text); font-size: 15.5px; }
-figure { margin: 0 0 32px; background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 24px 28px 18px; }
+figure { margin: 0 0 32px; background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 28px 32px 20px; }
 figure .aussage { font-size: 17px; font-weight: 650; line-height: 1.35; color: var(--tinte); margin: 0 0 4px; }
-figure .beschreibung { font-size: 13px; color: var(--grau); margin: 0 0 18px; }
+figure .beschreibung { font-size: 13px; color: var(--grau); margin: 0 0 24px; }
 figure .diagramm { min-height: 80px; }
 figure .diagramm svg { display: block; max-width: 100%; height: auto; font-family: var(--schrift); }
 figure .quelle { font-size: 12px; color: var(--hell); margin: 12px 0 0; }

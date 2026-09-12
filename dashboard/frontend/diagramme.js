@@ -96,14 +96,32 @@ function balken(element, daten, o) {
   });
 }
 
-// Säulen je Monat mit Versatzstück zum Vorjahresmonat (IBCS): liegt der Wert über dem
-// Vorjahresmonat, ist der Überschuss blau, sonst ist der Fehlbetrag rot – bei Kennzahlen,
-// deren Anstieg gut ist. Für "niedriger ist besser" (Stornoquote) sind die Farben getauscht.
-// daten: [{datum, wert, vorjahr, vormonat, imFilter}]; Optionen: format, hoeherBesser, achse, hoehe, klickMonat, tipp.
+// Gemeinsame Zeitachse für Säulendiagramme: Ticks je Quartal, Januar mit Jahreszahl.
+function zeitachse(bereich) {
+  const erster = +bereich[0];
+  return {
+    label: null, domain: bereich, ticks: schmal() ? d3.utcMonth.every(6) : d3.utcMonth.every(3), tickSize: 4,
+    tickFormat: (d) => (d.getUTCMonth() === 0 || +d === erster ? MONATE_KURZ[d.getUTCMonth()] + " " + d.getUTCFullYear() : MONATE_KURZ[d.getUTCMonth()]),
+  };
+}
+
+// Abstand zwischen den Säulen: die Säule nimmt etwa 55 % ihres Monatsfelds ein.
+function saeulenabstand(breite, anzahl, rand) {
+  const feld = (breite - rand) / Math.max(anzahl, 1);
+  return Math.max(2, feld * 0.22);
+}
+
+// Trennlinien und Jahreszahlen an den Jahresgrenzen als Führung.
+function jahresmarken(bereich) {
+  return d3.utcYears(bereich[0], bereich[1]);
+}
+
+// Säulen je Monat mit Versatzstück zum Vorjahresmonat (IBCS). Die Säule zeigt immer den
+// Ist-Wert. Liegt er über dem Vorjahresmonat, ist der Teil oberhalb des Vorjahreswerts
+// gefüllt; liegt er darunter, zeigt ein Umriss über der Säule den Fehlbetrag bis zum
+// Vorjahreswert. Blau = betriebswirtschaftlich besser, Rot = schlechter.
+// daten: [{datum, wert, vorjahr, vormonat, imFilter, bezug}]; Optionen: format, hoeherBesser, hoehe, klickMonat, tipp.
 function saeulen(element, daten, o) {
-  // Die Säule zeigt immer den Ist-Wert. Liegt er über dem Vorjahresmonat, ist der
-  // Teil oberhalb des Vorjahreswerts farbig gefüllt; liegt er darunter, zeigt ein
-  // farbiger Umriss über der Säule den Fehlbetrag bis zum Vorjahreswert.
   const istBesser = (d) => (o.hoeherBesser ? d.wert >= d.vorjahr : d.wert <= d.vorjahr);
   const farbe = (d) => (istBesser(d) ? FARBE.besser : FARBE.schlechter);
   const mitVorjahr = daten.filter((d) => d.vorjahr != null && d.wert !== d.vorjahr);
@@ -111,36 +129,48 @@ function saeulen(element, daten, o) {
   const fehlbetrag = mitVorjahr.filter((d) => d.wert < d.vorjahr);
   const deckkraft = (d) => (d.imFilter === false ? 0.35 : 1);
   const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
+  const breite = breiteVon(element), links = schmal() ? 56 : 72, rechts = 24;
+  const inset = saeulenabstand(breite, daten.length, links + rechts);
+  // Beschriftet werden nur der höchste Monat und der Bezugsmonat.
+  const maximum = d3.greatest(daten, (d) => d.wert);
+  const beschriftet = daten.filter((d) => d === maximum || d.bezug);
   return Plot.plot({
-    width: breiteVon(element), height: o.hoehe || 210, marginLeft: schmal() ? 60 : 72, marginRight: 16, marginTop: 10, marginBottom: o.achse ? 28 : 6,
-    x: { label: null, domain: bereich, axis: o.achse ? "bottom" : null, tickFormat: (d) => monatstext(d), ticks: "6 months" },
-    y: { label: null, grid: true, tickFormat: (d) => o.format(d), nice: true, zero: true, ticks: 4 },
-    style: { fontSize: "12px", color: FARBE.tinte },
+    width: breite, height: o.hoehe || 230, marginLeft: links, marginRight: rechts, marginTop: 22, marginBottom: 30,
+    x: zeitachse(bereich),
+    y: { label: null, grid: true, tickFormat: (d) => o.format(d), nice: true, zero: true, ticks: 4, tickSize: 0 },
+    style: { fontSize: "12px", color: FARBE.grau },
     marks: [
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: 1.5, insetRight: 1.5,
+      Plot.ruleX(jahresmarken(bereich), { stroke: FARBE.fuehrung, strokeDasharray: "2,3" }),
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
-      Plot.rectY(ueberschuss, { x: "datum", interval: "month", y1: "vorjahr", y2: "wert", fill: farbe, fillOpacity: deckkraft, insetLeft: 1.5, insetRight: 1.5 }),
-      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: 0.18, stroke: farbe, strokeWidth: 1.2, strokeOpacity: deckkraft, insetLeft: 1.5, insetRight: 1.5 }),
+      Plot.rectY(ueberschuss, { x: "datum", interval: "month", y1: "vorjahr", y2: "wert", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
+      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: 0.15, stroke: farbe, strokeWidth: 1.2, strokeOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
+      Plot.text(beschriftet, { x: (d) => d3.utcMonth.offset(d.datum, 0.5), y: (d) => (d.vorjahr != null ? Math.max(d.wert, d.vorjahr) : d.wert), dy: -8, text: (d) => o.format(d.wert), fill: FARBE.tinte, fontSize: 11.5, textAnchor: "middle", stroke: "#fff", strokeWidth: 3 }),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: "wert", title: o.tipp })),
     ],
   });
 }
 
-// Gestapelte Säulen je Monat: unten der realisierte Erlös (grau), oben der durch
-// Stornierung verlorene (rotbraun). daten: [{datum, realisiert, storniert, imFilter}].
+// Gestapelte Säulen je Monat: unten der realisierte Betrag (grau), oben der durch
+// Stornierung entgangene (rotbraun). daten: [{datum, realisiert, storniert, imFilter}].
 function gestapelteSaeulen(element, daten, o) {
   const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
   const deckkraft = (d) => (d.imFilter === false ? 0.35 : 1);
+  const breite = breiteVon(element), links = schmal() ? 56 : 72, rechts = 24;
+  const inset = saeulenabstand(breite, daten.length, links + rechts);
+  const maximum = d3.greatest(daten, (d) => d.realisiert + d.storniert);
   return Plot.plot({
-    width: breiteVon(element), height: 260, marginLeft: schmal() ? 60 : 72, marginRight: 16, marginTop: 10, marginBottom: 28,
-    x: { label: null, domain: bereich, tickFormat: (d) => monatstext(d), ticks: "6 months" },
-    y: { label: null, grid: true, tickFormat: (d) => kurz(d), nice: true, zero: true, ticks: 4 },
-    style: { fontSize: "12px", color: FARBE.tinte },
+    width: breite, height: 280, marginLeft: links, marginRight: rechts, marginTop: 22, marginBottom: 30,
+    x: zeitachse(bereich),
+    y: { label: null, grid: true, tickFormat: (d) => kurz(d), nice: true, zero: true, ticks: 4, tickSize: 0 },
+    style: { fontSize: "12px", color: FARBE.grau },
     marks: [
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "realisiert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: 1.5, insetRight: 1.5,
+      Plot.ruleX(jahresmarken(bereich), { stroke: FARBE.fuehrung, strokeDasharray: "2,3" }),
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "realisiert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: "realisiert", y2: (d) => d.realisiert + d.storniert, fill: FARBE.storno, fillOpacity: deckkraft, insetLeft: 1.5, insetRight: 1.5 }),
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: "realisiert", y2: (d) => d.realisiert + d.storniert, fill: FARBE.storno, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
+      Plot.text(maximum ? [maximum] : [], { x: (d) => d3.utcMonth.offset(d.datum, 0.5), y: (d) => d.realisiert + d.storniert, dy: -7, text: (d) => kurz(d.realisiert + d.storniert), fill: FARBE.tinte, fontSize: 11.5, textAnchor: "middle" }),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: (d) => d.realisiert + d.storniert, title: o.tipp })),
     ],
