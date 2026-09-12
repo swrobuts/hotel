@@ -80,6 +80,22 @@ pd.read_sql("SELECT hotel, count(*) FROM fact_bookings JOIN dim_hotel USING (hot
 
 Benötigt `pandas`, `sqlalchemy` und `psycopg2-binary` (siehe `requirements.txt`).
 
+## Daten herunterladen
+
+Das Leserecht genügt, um Tabellen vollständig auf den eigenen Rechner zu
+holen; ein Abzug der Faktentabelle (119.390 Zeilen) dauert wenige Sekunden.
+
+| Werkzeug | Vorgehen |
+|---|---|
+| psql | `\copy (SELECT * FROM fact_bookings) TO 'fact_bookings.csv' CSV HEADER` – läuft auf dem eigenen Rechner, die Datei landet dort |
+| DBeaver | Rechtsklick auf die Tabelle → *Daten exportieren* → CSV oder Excel |
+| Python | `pd.read_sql("SELECT * FROM fact_bookings", engine).to_csv("fact_bookings.csv", index=False)` |
+| Power BI, Tableau | der Import-Modus übernimmt ohnehin alle Zeilen in die eigene Datei |
+| ohne Datenbank | dieselben neun CSV-Dateien liegen in diesem Repo unter `data/` |
+
+Serverseitiges `COPY … TO '/pfad'` steht der Rolle nicht offen; es würde auf dem
+Server schreiben und wird für den Download nicht gebraucht.
+
 ## Inhalt des Repos
 
 | Pfad | Inhalt |
