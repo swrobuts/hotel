@@ -122,14 +122,26 @@ ORDER BY sortierung"""
 
 
 def segment_kundentyp(filter: Filter) -> dict:
-    """Anzahl Buchungen je Marktsegment und Kundentyp (Small Multiples)."""
+    """Anzahl Buchungen je Marktsegment, Kundentyp und Hotel (Tabelle, gruppierbar nach Hotel)."""
     where, parameter = where_klausel(filter)
-    sql = f"""SELECT ms.market_segment AS segment, ct.customer_type AS kundentyp,
+    sql = f"""SELECT ms.market_segment AS segment, ct.customer_type AS kundentyp, h.hotel AS hotel,
   COUNT(*) AS anzahl
 {STERN}
 {where}
-GROUP BY ms.market_segment, ct.customer_type
-ORDER BY ms.market_segment, ct.customer_type"""
+GROUP BY ms.market_segment, ct.customer_type, h.hotel
+ORDER BY ms.market_segment, ct.customer_type, h.hotel"""
+    return ausfuehren(sql, parameter)
+
+
+def laender_hotel(filter: Filter) -> dict:
+    """Kennzahlen je Herkunftsland und Hotel (Tabelle, gruppierbar nach Hotel)."""
+    where, parameter = where_klausel(filter)
+    sql = f"""SELECT c.country AS land, h.hotel AS hotel,
+  {KENNZAHLEN}
+{STERN}
+{where}
+GROUP BY c.country, h.hotel
+ORDER BY anzahl DESC"""
     return ausfuehren(sql, parameter)
 
 

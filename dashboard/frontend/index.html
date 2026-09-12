@@ -9,103 +9,141 @@
 <body>
 <main>
   <header class="kopf">
-    <div>
-      <h1>Hotel Booking Demand</h1>
-      <p>119.390 Buchungen eines Stadt- und eines Resorthotels in Portugal, Anreisen Juli 2015 bis August 2017 · live aus der Datenbank <code>hotel</code></p>
-    </div>
-    <nav>
-      <button id="link" type="button">Link kopieren</button>
-      <a href="https://github.com/swrobuts/hotel" target="_blank" rel="noopener">Repo</a>
-    </nav>
+    <h1>Hotel Booking Demand</h1>
+    <p class="untertitel">Zwei Hotels in Portugal – ein Stadthotel und ein Resorthotel –, 119.390 Buchungen mit Anreise zwischen Juli 2015 und August 2017. Alle Zahlen kommen bei jedem Filterwechsel live aus der Datenbank <code>hotel</code>.</p>
+    <nav><button id="link" type="button">Link mit Filterzustand kopieren</button><a href="https://github.com/swrobuts/hotel" target="_blank" rel="noopener">Repo und Datenbeschreibung</a></nav>
   </header>
 
-  <div id="filterleiste">
+  <details id="filterfeld">
+    <summary><span id="filter-zusammenfassung">Filter</span></summary>
     <div class="felder">
       <label>Hotel<select name="hotel"><option value="">alle</option></select></label>
       <label>Anreisejahr<select name="jahr"><option value="">alle</option></select></label>
-      <label>Zeitraum ab<input type="month" name="von" min="2015-07" max="2017-08"></label>
-      <label>bis<input type="month" name="bis" min="2015-07" max="2017-08"></label>
+      <label>Anreise ab Monat<input type="month" name="von" min="2015-07" max="2017-08"></label>
+      <label>bis Monat<input type="month" name="bis" min="2015-07" max="2017-08"></label>
       <label>Marktsegment<select name="segment"><option value="">alle</option></select></label>
       <label>Vertriebskanal<select name="kanal"><option value="">alle</option></select></label>
       <label>Kundentyp<select name="kundentyp"><option value="">alle</option></select></label>
       <label>Kautionstyp<select name="kaution"><option value="">alle</option></select></label>
-      <label>Land<select name="land"><option value="">alle</option></select></label>
+      <label>Herkunftsland<select name="land"><option value="">alle</option></select></label>
       <label>Vorlaufzeit<select name="vorlaufzeit"><option value="">alle</option></select></label>
     </div>
-    <div id="chips"></div>
-    <p class="hinweis">Jeder Klick auf einen Balken, einen Monat oder ein Land setzt den Filter für alle Diagramme; ein zweiter Klick hebt ihn auf. <button id="zuruecksetzen" type="button" hidden>Alle Filter zurücksetzen</button></p>
-  </div>
-
+    <p class="hinweis">Ein Klick auf einen Balken, einen Monat oder eine Tabellenzeile setzt den Filter für alle Diagramme; ein zweiter Klick hebt ihn auf.</p>
+  </details>
+  <div id="chips"></div>
   <div id="fehler" hidden></div>
 
-  <div id="kacheln"></div>
+  <section id="ueberblick">
+    <h2>Auf einen Blick</h2>
+    <p class="lead" id="lead-ueberblick"></p>
+    <div id="kacheln"></div>
+    <figure id="fig-kennzahlen">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="tabellenkasten"><table id="tabelle-kennzahlen"></table></div>
+      <p class="quelle">Definitionen wie im KPI-Katalog des Grundgerüsts und im Notebook (Abschnitt 4). Verlauf: je Anreisemonat, Skala je Zeile (Minimum und Maximum stehen daneben).</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="kennzahlen"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
+  </section>
 
-  <section id="uebersicht">
-    <h2>Übersicht</h2>
-    <div class="raster">
-      <figure><h3>Buchungen je Anreisemonat</h3><div id="linie-buchungen" class="diagramm"></div>
-        <details class="sql" data-route="monate"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure><h3>Gesamterlös je Anreisemonat</h3><div id="linie-erloes" class="diagramm"></div>
-        <figcaption>Erlös = Tagesrate × Nächte je Buchung, auch stornierte Buchungen.</figcaption></figure>
-    </div>
+  <section id="zeit">
+    <h2>Nachfrage im Zeitverlauf</h2>
+    <p class="lead" id="lead-zeit"></p>
+    <figure id="fig-zeitverlauf">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm gestapelt"><div id="zeit-buchungen"></div><div id="zeit-erloes"></div><div id="zeit-storno"></div></div>
+      <p class="quelle">Drei Felder, eine Zeitachse; jedes Feld hat seine eigene Einheit und Skala. Werte stehen am Linienende.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="monate"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
+    <figure id="fig-saison">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm" id="saison"></div>
+      <p class="quelle">2015 beginnt im Juli, 2017 endet im August; nur 2016 ist ein vollständiges Jahr.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+    </figure>
   </section>
 
   <section id="vertrieb">
     <h2>Vertrieb und Kundensegmente</h2>
-    <div class="raster">
-      <figure><h3>Anzahl Buchungen nach Marktsegment</h3><div id="balken-segment" class="diagramm"></div>
-        <details class="sql" data-route="segmente"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure><h3>Gesamterlös nach Vertriebskanal</h3><div id="balken-kanal" class="diagramm"></div>
-        <details class="sql" data-route="kanaele"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure class="breit"><h3>Anzahl Buchungen nach Marktsegment, je Kundentyp ein Feld</h3><div id="multiples-segment-kundentyp" class="diagramm"></div>
-        <details class="sql" data-route="segment_kundentyp"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-    </div>
+    <p class="lead" id="lead-vertrieb"></p>
+    <figure id="fig-segment">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm" id="balken-segment"></div>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="segmente"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
+    <figure id="fig-kanal">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm" id="balken-kanal"></div>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="kanaele"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
+    <figure id="fig-pivot">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="tabellenleiste"><label>Gruppieren nach <select id="pivot-gruppierung"><option value="">–</option><option value="hotel">Hotel</option></select></label><span class="hinweis">Klick auf eine Spaltenüberschrift sortiert.</span></div>
+      <div class="tabellenkasten"><table id="tabelle-pivot"></table></div>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="segment_kundentyp"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
   </section>
 
   <section id="storno">
-    <h2>Stornoanalyse</h2>
-    <div class="raster">
-      <figure><h3>Stornoquote nach Hotel</h3><div id="balken-storno-hotel" class="diagramm"></div>
-        <details class="sql" data-route="hotels"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure><h3>Stornoquote nach Kautionstyp</h3><div id="balken-storno-kaution" class="diagramm"></div>
-        <details class="sql" data-route="kautionen"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure><h3>Stornoquote nach Marktsegment</h3><div id="balken-storno-segment" class="diagramm"></div></figure>
-      <figure><h3>Stornoquote nach Vorlaufzeit (Tage)</h3><div id="balken-storno-vorlaufzeit" class="diagramm"></div>
-        <details class="sql" data-route="vorlaufzeit"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure class="breit"><h3>Erlös je Monat nach Anreise- und nach Stornodatum</h3><div id="linie-erloes-datum" class="diagramm"></div>
-        <figcaption>Dieselbe Kennzahl über zwei Verknüpfungen mit der Datumstabelle: Anreisedatum (aktive Beziehung in Power BI) und Datum des Reservierungsstatus (inaktive Beziehung, USERELATIONSHIP). Zeitfilter gelten je Reihe für das jeweilige Datum.</figcaption>
-        <details class="sql" data-route="erloes_datum"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-    </div>
+    <h2>Stornorisiko</h2>
+    <p class="lead" id="lead-storno"></p>
+    <figure id="fig-storno">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="raster-2 gleiche-skala">
+        <div><h4>nach Hotel</h4><div class="diagramm" id="storno-hotel"></div></div>
+        <div><h4>nach Kautionstyp</h4><div class="diagramm" id="storno-kaution"></div></div>
+        <div><h4>nach Marktsegment</h4><div class="diagramm" id="storno-segment"></div></div>
+        <div><h4>nach Vorlaufzeit (Tage zwischen Buchung und Anreise)</h4><div class="diagramm" id="storno-vorlaufzeit"></div></div>
+      </div>
+      <p class="quelle">Alle vier Felder auf derselben Skala von 0 bis 100 %; die gestrichelte Linie ist die Stornoquote des gesamten gefilterten Bestands.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="vorlaufzeit"><summary>SQL anzeigen (Vorlaufzeit)</summary><pre></pre></details>
+    </figure>
+    <figure id="fig-datum">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm" id="erloes-datum"></div>
+      <p class="quelle">Dieselbe Kennzahl über zwei Verknüpfungen mit der Datumstabelle: Anreisedatum (aktive Beziehung in Power BI) und Datum des Reservierungsstatus (inaktive Beziehung, USERELATIONSHIP). Zeitfilter gelten je Reihe für das jeweilige Datum.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="erloes_datum"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
   </section>
 
-  <section id="saison">
-    <h2>Saisonalität und Herkunftsländer</h2>
-    <div class="raster">
-      <figure class="breit"><h3>Buchungen je Anreisemonat und Jahr</h3><div id="linie-monat-jahr" class="diagramm"></div>
-        <figcaption>2015 beginnt im Juli, 2017 endet im August.</figcaption></figure>
-      <figure class="breit"><h3>Herkunftsländer der Gäste</h3><div id="karte" class="diagramm"></div>
-        <div class="legende"><span>wenige</span><span class="verlauf"></span><span>viele Buchungen</span><span>· hell: keine Buchungen · ausgewähltes Land rotbraun</span></div>
-        <figcaption>ISO-3-Codes des Datensatzes; „CN" wird als China gezeigt, Kleinstaaten haben bei 1:110 Mio. keine Fläche und stehen nur in der Tabelle.</figcaption>
-        <details class="sql" data-route="laender"><summary>SQL anzeigen</summary><pre></pre></details></figure>
-      <figure><h3>Top-10-Herkunftsländer nach Anzahl Buchungen</h3><div id="balken-laender" class="diagramm"></div></figure>
-      <figure><h3>Alle Herkunftsländer</h3>
-        <div class="tabellenleiste"><span id="tabelle-hinweis"></span><button id="csv" type="button">CSV herunterladen</button></div>
-        <div class="tabellenkasten"><table id="tabelle-laender"></table></div></figure>
-    </div>
+  <section id="herkunft">
+    <h2>Herkunft der Gäste</h2>
+    <p class="lead" id="lead-herkunft"></p>
+    <figure id="fig-laender">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="diagramm" id="balken-laender"></div>
+      <p class="quelle">Ländercodes nach ISO 3166-1 alpha-3, wie im Datensatz; „CN" steht dort für China, „UNK" für unbekannt.</p>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="laender"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
+    <figure id="fig-laendertabelle">
+      <h3 class="aussage"></h3><p class="beschreibung"></p>
+      <div class="tabellenleiste"><label>Gruppieren nach <select id="laender-gruppierung"><option value="">–</option><option value="hotel">Hotel</option></select></label><span class="hinweis" id="laender-hinweis"></span><button id="csv" type="button">CSV herunterladen</button></div>
+      <div class="tabellenkasten hoch"><table id="tabelle-laender"></table></div>
+      <details class="deutung"><summary>Interpretation und Handlungsempfehlung</summary><div class="deutung-text"></div></details>
+      <details class="sql" data-route="laender_hotel"><summary>SQL anzeigen</summary><pre></pre></details>
+    </figure>
   </section>
 
   <footer>
-    Datenquelle: Antonio, de Almeida &amp; Nunes (2019), <em>Hotel booking demand datasets</em>, Data in Brief 22 (CC BY 4.0). Kennzahlen wie im Notebook und in der Power-BI-Referenzlösung des Repos.
-    Gestaltung nach Tufte, Few und Hichert: eine Farbe je Bedeutung, Werte am Balken, Aussage im Titel.
+    <p>Datenquelle: Antonio, de Almeida &amp; Nunes (2019), <em>Hotel booking demand datasets</em>, Data in Brief 22 (CC BY 4.0). Kennzahlen wie im Notebook und in der Power-BI-Referenzlösung des Repos.</p>
+    <p>Gestaltung nach Tufte, Few, Hichert (IBCS) und Bissantz: Aussage im Titel, Beschreibung mit Messgröße, Einheit und Zeitraum; Werte am Balken statt Achsen; Kennzahlen untereinander mit einer Zeitachse; gleiche Skalen, wo verglichen wird; eine Farbe je Bedeutung – Grau für Mengen und Beträge, Rotbraun für Stornierungen, Petrol für die aktive Auswahl.</p>
   </footer>
 </main>
 
 <!-- Bibliotheken mit fester Version, damit alle dasselbe Verhalten sehen -->
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/dist/plot.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <script src="format.js"></script>
 <script src="diagramme.js"></script>
+<script src="tabelle.js"></script>
+<script src="texte.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

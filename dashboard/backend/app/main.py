@@ -104,6 +104,12 @@ def laender(filter: Filter = Depends(filter_parameter)) -> dict:
     return abfragen.laender(filter)
 
 
+@app.get("/api/laender_hotel")
+def laender_hotel(filter: Filter = Depends(filter_parameter)) -> dict:
+    """Kennzahlen je Herkunftsland und Hotel."""
+    return abfragen.laender_hotel(filter)
+
+
 @app.get("/")
 def startseite() -> FileResponse:
     """Liefert das Dashboard."""

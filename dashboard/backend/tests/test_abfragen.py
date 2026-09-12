@@ -89,3 +89,14 @@ def test_filterwerte_liefert_alle_listen():
 def test_startseite_liefert_html():
     antwort = client.get("/")
     assert antwort.status_code == 200 and "<html" in antwort.text.lower()
+
+
+def test_laender_hotel_summiert_sich_zu_laendern():
+    je_hotel = client.get("/api/laender_hotel", params={"land": "DEU"}).json()["daten"]
+    gesamt = client.get("/api/laender", params={"land": "DEU"}).json()["daten"][0]
+    assert sum(z["anzahl"] for z in je_hotel) == gesamt["anzahl"] == 7287
+
+
+def test_segment_kundentyp_enthaelt_hotel():
+    zeile = client.get("/api/segment_kundentyp").json()["daten"][0]
+    assert {"segment", "kundentyp", "hotel", "anzahl"} <= set(zeile)
