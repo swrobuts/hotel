@@ -21,14 +21,6 @@ function abweicher(zeilen, dimension) {
   return ` – ${klarname(dimension, groesster[dimension])} bringt ${groesster.delta > 0 ? "mehr" : "weniger"} Erlös als Buchungen (${dezimal1(Math.abs(groesster.delta) * 100)} Prozentpunkte)`;
 }
 
-// Summiert die Monate über alle Jahre und nennt die zwei stärksten und den schwächsten Monat.
-function saisonprofil(monate) {
-  const summen = d3.rollups(monate, (z) => d3.sum(z, (x) => x.anzahl_buchungen), (z) => z.monat).map(([monat, anzahl]) => ({ monat, anzahl }));
-  if (summen.length < 3) return null;
-  const sortiert = [...summen].sort((a, b) => b.anzahl - a.anzahl);
-  return { spitzen: sortiert.slice(0, 2).map((z) => MONATE_LANG[z.monat - 1]), tief: MONATE_LANG[sortiert.at(-1).monat - 1] };
-}
-
 // ---------------------------------------------------------------------------
 // Leitsätze der Abschnitte
 // ---------------------------------------------------------------------------
@@ -92,8 +84,6 @@ function aussagen(d) {
       beschreibung("Die zehn Kennzahlen des Katalogs je Hotel, mit Verlauf je Anreisemonat und Abweichung zum Vormonat und Vorjahresmonat")],
     zeitverlauf: [spitze ? `${monatLang(spitze)} war der stärkste Anreisemonat: ${zahl(spitze.anzahl_buchungen)} Buchungen${erloesSpitze ? `; höchster Erlös im ${monatLang(erloesSpitze)} (${kurz(erloesSpitze.gesamterloes)} EUR)` : ""}` : "Kein Zeitverlauf verfügbar",
       beschreibung("Anzahl Buchungen, Gesamterlös in EUR und Stornoquote je Anreisemonat; Versatzstück = Abweichung zum Vorjahresmonat")],
-    saison: [d.saison ? `Über die Jahre summiert sind ${liste(d.saison.spitzen)} die stärksten Monate, ${d.saison.tief} der schwächste` : "Kein Saisonverlauf verfügbar",
-      beschreibung("Anzahl Buchungen je Anreisemonat, Jahre als Linien in Graustufen (2015 hell, 2017 dunkel)")],
     segment: [top ? `${klarname("segment", top.segment)}: ${anteil(top.anzahl, d3.sum(d.segmente, (z) => z.anzahl))} der Buchungen, ${anteil(top.erloes, d3.sum(d.segmente, (z) => z.erloes))} des Erlöses${abweicher(d.segmente, "segment")}` : "Keine Buchungen",
       beschreibung("Je Marktsegment der Anteil an den Buchungen neben dem Anteil am Erlös (Tagesrate × Nächte, auch stornierte Buchungen), gleiche Skala, absolute Werte in Klammern")],
     kanal: [kanal ? `${klarname("kanal", kanal.kanal)}: ${anteil(kanal.erloes, d3.sum(d.kanaele, (z) => z.erloes))} des Erlöses bei ${anteil(kanal.anzahl, d3.sum(d.kanaele, (z) => z.anzahl))} der Buchungen${abweicher(d.kanaele, "kanal")}` : "Keine Buchungen",
@@ -150,12 +140,6 @@ function deutungen(d) {
     + `der Erlös ist im ${monatLang(erloesSpitze)} am höchsten (${kurz(erloesSpitze.gesamterloes)} EUR). `
     + `Blaue Versatzstücke zeigen Monate über dem Vorjahresmonat, rote darunter. Die Stornoquote schwankt zwischen ${prozent(stornoTief.stornoquote)} und ${prozent(stornoSpitze.stornoquote)}.`,
     `Planung an der Saisonkurve ausrichten; Prognosen auf 2016 stützen, das einzige vollständige Jahr. Überbuchung am Monatswert der Stornoquote kalibrieren; Tiefmonate über Preis und Pakete stützen statt Hochsaison zu rabattieren.`,
-  ];
-
-  T.saison = m.length < 2 ? ["Zu wenige Monate.", "Zeitraum erweitern."] : [
-    `${d.saison ? `Die Monatsprofile der Jahre laufen weitgehend parallel; am stärksten sind ${liste(d.saison.spitzen)}, am schwächsten ist ${d.saison.tief}. ` : ""}`
-    + `${wenn(jahre.some((j) => j.jahr === 2017) && j2016, () => `Januar bis August 2017: ${zahl(d3.sum(m.filter((z) => z.jahr === 2017), (z) => z.anzahl_buchungen))} Buchungen gegenüber ${zahl(d3.sum(m.filter((z) => z.jahr === 2016 && z.monat <= 8), (z) => z.anzahl_buchungen))} im gleichen Zeitraum 2016.`)}`,
-    `Nur gleiche Monate vergleichen (Vorjahresvergleich), weil die Saison den Unterschied dominiert; 2016 als Budgetbasis, das Wachstum 2017 als Trend.`,
   ];
 
   T.segment = !top ? ["Keine Daten.", "–"] : [

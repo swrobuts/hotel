@@ -287,7 +287,6 @@ function kontextBilden() {
     vorlauf: D.vorlaufzeit.daten, pivot, pivotTop: jeKundentyp.length ? d3.greatest(jeKundentyp, (z) => z.anzahl) : null,
     laender, laenderHotel: D.laender_hotel.daten,
     stornoAusland: d3.sum(ausland, (z) => z.stornierungen) / (d3.sum(ausland, (z) => z.anzahl) || 1),
-    saison: saisonprofil(monateImFilter),
     zeitraumText: zeitraumText(), filterText: filterText(), gefiltert: Object.keys(zustand.filter).length > 0,
   };
 }
@@ -317,7 +316,6 @@ function allesZeichnen() {
   hotelvergleichZeichnen(d);
   kennzahlentabelleZeichnen(d);
   zeitverlaufZeichnen(d);
-  saisonZeichnen(d);
   vertriebZeichnen(d);
   stornoZeichnen(d);
   erloesverlustZeichnen(d);
@@ -435,17 +433,6 @@ function zeitverlaufZeichnen(d) {
   }
 }
 
-// Saisonkurve je Jahr; Tooltip mit Vorjahresvergleich desselben Monats.
-function saisonZeichnen(d) {
-  const m = d.monateImFilter;
-  const nachSchluessel = new Map(m.map((z) => [z.jahr * 100 + z.monat, z.anzahl_buchungen]));
-  const tipp = (z) => {
-    const vorjahr = nachSchluessel.get((z.jahr - 1) * 100 + z.monat);
-    return `${MONATE_LANG[z.monat - 1]} ${z.jahr}: ${zahl(z.anzahl_buchungen)} Buchungen` + (vorjahr ? `\nVorjahresmonat ${zahl(vorjahr)}: ${abweichungText(z.anzahl_buchungen / vorjahr - 1)}` : "");
-  };
-  zeichnen("saison", (el) => saisonlinien(el, m, { wert: "anzahl_buchungen", format: zahl, klickMonat: monatSetzen, tipp }));
-}
-
 // Tooltip einer Dimensionszeile: Buchungen, Anteil, Stornoquote, Tagesrate.
 function dimensionTipp(dimension, kategorie, gesamt) {
   return (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})\nStornoquote ${prozent(z.stornoquote)}\nØ Zimmerpreis ${dezimal(z.adr)} EUR\nErlös ${kurz(z.erloes)} EUR`;
@@ -503,7 +490,7 @@ function stornoZeichnen(d) {
 
 // Realisierter und durch Stornierung entgangener Erlös je Anreisemonat als gestapelte Säulen.
 function erloesverlustZeichnen(d) {
-  const daten = d.monate.map((m) => ({ datum: m.datum, imFilter: m.imFilter, realisiert: m.erloes_nicht_storniert || 0, storniert: m.erloes_storniert || 0 }));
+  const daten = d.monate.map((m) => ({ datum: m.datum, imFilter: m.imFilter, bezug: m.bezug, realisiert: m.erloes_nicht_storniert || 0, storniert: m.erloes_storniert || 0 }));
   const tipp = (z) => `${monatstext(z.datum)}\nkalkuliert ${kurz(z.realisiert + z.storniert)} EUR\nrealisiert ${kurz(z.realisiert)} EUR\ndurch Stornierung entgangen ${kurz(z.storniert)} EUR (${prozent(z.storniert / ((z.realisiert + z.storniert) || 1))})`;
   zeichnen("erloesverlust", (el) => (daten.length ? gestapelteSaeulen(el, daten, { klickMonat: monatSetzen, tipp }) : document.createElement("div")));
 }
