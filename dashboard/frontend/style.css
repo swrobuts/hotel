@@ -10,7 +10,8 @@
   --flaeche: #ffffff;
   --grund: #f8f8f6;
   --akzent: #20808d;
-  --storno: #a84b2f;
+  --blau: #2f7fbf;
+  --rot: #c8412b;
   --schrift: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --breite: 1480px;
 }
@@ -45,7 +46,7 @@ header.kopf nav a:hover, header.kopf nav button:hover { text-decoration: underli
 .chip:hover { background: var(--akzent); color: #fff; }
 #zuruecksetzen { font: inherit; font-size: 13px; padding: 3px 10px; border: 1px solid var(--linie); border-radius: 999px; background: var(--flaeche); color: var(--grau); cursor: pointer; }
 #zuruecksetzen:hover { color: var(--tinte); border-color: var(--grau); }
-#fehler { background: #fbe9e4; color: var(--storno); padding: 10px 14px; border-radius: 6px; margin: 16px 0; }
+#fehler { background: #fbe9e4; color: var(--rot); padding: 10px 14px; border-radius: 6px; margin: 16px 0; }
 
 /* Abschnitte: Überschrift, Leittext, Figuren untereinander */
 section { margin-top: 64px; }
@@ -60,18 +61,19 @@ figure .quelle { font-size: 12px; color: var(--hell); margin: 12px 0 0; }
 figure h4 { font-size: 13px; font-weight: 600; color: var(--grau); margin: 0 0 6px; }
 .gestapelt > div + div { margin-top: 10px; }
 .gestapelt h4 { margin: 0 0 2px 4px; }
-td .definition { display: block; font-size: 11.5px; color: var(--hell); white-space: normal; max-width: 360px; }
 td .definition-inline { font-size: 11.5px; color: var(--hell); margin-left: 4px; }
 .raster-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; }
 .untereinander > div + div { margin-top: 36px; }
 .signal { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 2px; }
-.signal.besser { background: #2f7fbf; }
-.signal.schlechter { background: #c8412b; }
-.signal.grau { background: #5f5f5f; }
-.signal.storno { background: #a84b2f; }
+.signal.besser { background: var(--blau); }
+.signal.schlechter { background: var(--rot); }
+.signal.grau { background: #777777; }
+/* Werte in der aufgehellten Stufe (STUFE.wert = 0,6 in diagramme.js) */
+.signal.wert-gut { background: #82b2d9; }
+.signal.wert-schlecht { background: #de8d80; }
 .abweichung { font-size: 12.5px; white-space: nowrap; }
-.abweichung .wert-besser { color: #2f7fbf; font-weight: 600; }
-.abweichung .wert-schlechter { color: #c8412b; font-weight: 600; }
+.abweichung .wert-besser { color: var(--blau); font-weight: 600; }
+.abweichung .wert-schlechter { color: var(--rot); font-weight: 600; }
 .abweichung .wert-neutral { color: var(--grau); font-weight: 600; }
 
 /* Aufklappbare Texte */
@@ -85,19 +87,16 @@ details.deutung[open] summary::before, details.sql[open] summary::before { conte
 .deutung-text p { margin: 0 0 8px; }
 details.sql pre { background: var(--grund); border: 1px solid var(--linie); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font-size: 11.5px; line-height: 1.45; white-space: pre; color: var(--tinte); }
 
-/* Kacheln: vier Kennzahlen, ohne Verlauf */
+/* Kacheln: sechs Kennzahlen mit Mini-Säulen; der Titel darf zwei Zeilen lang sein, die Zahlen bleiben in einer Flucht */
 #kacheln { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; margin-bottom: 32px; }
-.kachel { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 16px 18px 14px; }
-.kachel-titel { font-size: 13px; color: var(--grau); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.kachel { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 10px 18px 14px; }
+.kachel-titel { font-size: 13px; line-height: 1.35; min-height: 2.7em; display: grid; align-content: end; color: var(--grau); text-align: center; text-wrap: balance; }
 .kachel-wert { font-size: 30px; font-weight: 650; color: var(--tinte); line-height: 1.15; margin: 2px 0 2px; white-space: nowrap; text-align: center; }
-.kachel-wert.storno { color: var(--storno); }
 .kachel-vergleich { font-size: 12px; color: var(--grau); min-height: 16px; text-align: center; }
 .kachel-verlauf { margin: 8px 0 6px; }
 .kachel-verlauf svg { display: block; max-width: 100%; }
 .kachel .abweichung { display: block; color: var(--grau); line-height: 1.5; text-align: center; }
 .kacheln-hinweis { font-size: 12px; color: var(--hell); margin: -20px 0 28px; }
-tbody tr.summe td { border-top: 2px solid var(--grau); }
-td .wert-besser { color: #2f7fbf; font-weight: 600; }
 td.aktiv-spalte, th.aktiv-spalte { background: #eef5f6; }
 
 /* Tabellen: Zahlen rechtsbündig, Datenbalken, sortierbare Köpfe, Gruppenzeilen */
@@ -114,8 +113,9 @@ th.sortiert { color: var(--tinte); }
 th.zahl, td.zahl { text-align: right; }
 td { position: relative; }
 td .wert { position: relative; }
-.datenbalken { position: absolute; right: 8px; top: 7px; bottom: 7px; background: #e5eeef; max-width: calc(100% - 16px); }
-.datenbalken.storno { background: #f1dfd8; }
+/* Datenbalken: hellste Stufe der Kennzahlfarbe (blau: mehr ist gut, rot: Stornierungen) */
+.datenbalken { position: absolute; right: 8px; top: 7px; bottom: 7px; background: #d5e5f2; max-width: calc(100% - 16px); }
+.datenbalken.storno { background: #f4d9d5; }
 tbody tr.gruppe td { background: var(--grund); font-weight: 600; color: var(--tinte); }
 tbody tr.klickbar { cursor: pointer; }
 tbody tr.klickbar:hover td { background: #f3f6f7; }
@@ -144,7 +144,6 @@ footer p { margin: 0 0 8px; }
   /* Auf dem Telefon nur die tragenden Spalten; der Rest bleibt in der Desktop-Ansicht */
   #tabelle-kennzahlen .spalte-minimum, #tabelle-kennzahlen .spalte-maximum, #tabelle-kennzahlen .spalte-gesamt,
   #tabelle-laender .spalte-naechte, #tabelle-laender .spalte-adr, #tabelle-laender .spalte-erloes { display: none; }
-  td .definition { max-width: 200px; }
 }
 
 /* Tooltip der Mini-Säulen (Kacheln, Kennzahlentabelle) */

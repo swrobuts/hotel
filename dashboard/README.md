@@ -15,8 +15,8 @@ Power-BI-Referenzlösung. Es ist zugleich das Lehrbeispiel für die Arbeitsteilu
 
 | | |
 |---|---|
-| Auf einen Blick | sechs Kacheln (Umsatz, gebuchter Umsatz, Buchungen, Stornoquote, Ø Zimmerpreis, Ø Aufenthalt) mit Mini-Säulen über alle Monate (gleiche Zeitachse, ab null) und der Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat — blau = betriebswirtschaftlich besser, rot = schlechter; Hotelvergleich (Hotels als Zeilen, Summenzeile „beide Hotels", bessere Werte markiert); Kennzahlentabelle mit den zehn Katalog-Kennzahlen je Hotel, Verlauf, Abweichungen, Minimum und Maximum |
-| Zeitverlauf | Buchungen, Umsatz und Stornoquote als Säulen **untereinander**, jedes Feld mit eigener Zeitachse; Versatzstück zum Vorjahresmonat nach IBCS (gefüllt = Zuwachs, Umriss = Fehlbetrag; blau besser, rot schlechter); beschriftet sind erster Monat, Minimum, Maximum und Bezugsmonat |
+| Auf einen Blick | sechs Kacheln (stornobereinigter Umsatz, gebuchter Umsatz, Buchungen, Stornoquote, Ø Zimmerpreis, Ø Aufenthalt) mit Mini-Säulen über alle Monate (gleiche Zeitachse, ab null) und der Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat — blau = betriebswirtschaftlich besser, rot = schlechter; Kennzahlentabelle mit den zehn Katalog-Kennzahlen je Hotel und für beide zusammen, Verlauf, Abweichungen, Minimum und Maximum |
+| Zeitverlauf | Buchungen, stornobereinigter Umsatz und Stornoquote als Säulen **untereinander**, jedes Feld mit eigener Zeitachse; Versatzstück zum Vorjahresmonat nach IBCS (oberes Stück der Säule = Zuwachs, Stück über der Säule = Fehlbetrag; blau besser, rot schlechter; hohle Säulen bleiben Plan- und Prognosewerten vorbehalten); beschriftet sind erster Monat, Minimum, Maximum und Bezugsmonat |
 | Vertrieb | je Marktsegment und je Vertriebskanal der Anteil an den Buchungen neben dem Anteil am Umsatz (gleiche Prozentskala, absolute Werte in Klammern); Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
 | Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit untereinander auf **einer Skala 0–100 %** mit Referenzlinie „insgesamt"; Umsatz und durch Stornierung entgangener Umsatz je Monat |
 | Herkunft | die 15 größten Länder als Balken (übrige zusammengefasst), alle Länder als sortierbare, nach Hotel gruppierbare Tabelle mit Datenbalken und CSV-Export |
@@ -27,7 +27,7 @@ Power-BI-Referenzlösung. Es ist zugleich das Lehrbeispiel für die Arbeitsteilu
 
 Gegenüber der Power-BI-Lösung kommen hinzu: SQL-Anzeige, teilbarer Filterzustand,
 Interpretation und Handlungsempfehlung je Figur, Vorjahres- und Vormonatsvergleich
-mit Signalfarben, Hotelvergleich, Gruppierung in Tabellen.
+mit Signalfarben, Gruppierung in Tabellen.
 
 ## Gestaltung
 
@@ -37,11 +37,11 @@ Nach Tufte, Few, Hichert (IBCS) und Bissantz:
 * **Gleiche Skalen, wo verglichen wird:** die vier Stornoquoten-Diagramme teilen eine Skala; Kennzahlen mit verschiedenen Einheiten stehen untereinander auf einer Zeitachse, nie nebeneinander (Bissantz: Kennzahlen untereinander).
 * **Fluchten:** alle Balkendiagramme haben dieselbe Beschriftungsbreite, sodass Balken und Werte über die Seite hinweg in einer Linie stehen; eine Spalte, 32 px Abstand, 64 px zwischen Abschnitten.
 * **Wenig Tinte ohne Daten:** keine Rahmen und Achsen, wo Werte am Balken stehen; Gitterlinien nur bei Zeitreihen; Linien enden mit ihrer Beschriftung statt in einer Legende.
-* **Eine Farbe je Bedeutung:** Grau für Mengen und Beträge, Rotbraun für Stornierungen, Petrol für die aktive Auswahl.
+* **Farbe als Werturteil (DeltaMaster-Logik von Bissantz):** Blau für Kennzahlen, die das Ergebnis verbessern (Umsatz, Buchungen, Zimmerpreis), Rot für Kennzahlen zu seinen Lasten (Stornoquote, entgangener Umsatz), Grau ohne Wertung (Vorlaufzeit, Sonderwünsche). Werte stehen in der aufgehellten Stufe, das volle Blau/Rot bleibt Abweichungen (besser/schlechter) und dem Bezugsmonat vorbehalten; Zahlen bleiben schwarz. Keine Farbe für „besseres Hotel" oder andere Vergleiche ohne Ergebniswirkung. Petrol markiert die aktive Auswahl.
 * **Tabellen als grafische Tabellen:** Zahlen rechtsbündig, Datenbalken relativ zum Spaltenmaximum, Sparklines mit explizitem Minimum und Maximum, Gruppenzeilen mit Zwischensummen.
 * **Telefon:** eine Spalte, kleinere Ränder, Tabellen zeigen die tragenden Spalten, der Rest ist rollbar.
 
-Quellen: IBCS-SUCCESS-Regeln (Say, Unify, Condense, Check, Express, Simplify, Structure); Datawrapper, *What to consider when using text in data visualizations*; Few, *Common Pitfalls in Dashboard Design*; Bissantz, *Bella berät – 75 Regeln für bessere Visualisierung*.
+Quellen: IBCS-SUCCESS-Regeln (Say, Unify, Condense, Check, Express, Simplify, Structure); Datawrapper, *What to consider when using text in data visualizations*; Few, *Common Pitfalls in Dashboard Design*; Bissantz, *Bella berät – 75 Regeln für bessere Visualisierung* und [Using business effects as color criteria](https://www.bissantz.de/en/know-how/clicks-en/using-business-effects-as-color-criteria/) (DeltaMaster: Blau = gut für das Geschäftsziel, Rot = schlecht, unabhängig vom mathematischen Vorzeichen).
 
 ## Lokal starten
 
@@ -128,8 +128,9 @@ Repo verbinden, *Deploy Blueprint*.
 
 ## Begriffe
 
-**Umsatz** = Zimmerpreis (ADR) × Nächte je Buchung, nur Übernachtung, für nicht
-stornierte Buchungen (Spalte `revenue` der Faktentabelle, `is_canceled = 0`).
+**Stornobereinigter Umsatz** (in Texten kurz: Umsatz) = Zimmerpreis (ADR) × Nächte je
+Buchung, nur Übernachtung, für nicht stornierte Buchungen (Spalte `revenue` der
+Faktentabelle, `is_canceled = 0`).
 **Gebuchter Umsatz** = derselbe Wert über alle Buchungen vor Stornierung.
 **Durch Stornierung entgangener Umsatz** = Differenz der beiden. In der
 Hotellerie heißt diese Größe Logisumsatz; für die Vorlesung gilt der

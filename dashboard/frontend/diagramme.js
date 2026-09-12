@@ -2,23 +2,30 @@
 //
 // Regeln (Tufte, Few, Hichert/IBCS, Bissantz): wenig Tinte ohne Daten; Werte
 // direkt am Balken; Zeit waagerecht als Säulen, Struktur senkrecht als Balken;
-// gleiche Skalen, wo verglichen wird; eine Farbe je Bedeutung: Grau für Mengen
-// und Beträge, Rotbraun für Stornierungen, Petrol für die aktive Auswahl,
-// Blau/Rot nur als Signal "besser/schlechter" im Vergleich zum Vorjahresmonat.
+// gleiche Skalen, wo verglichen wird; Farbe nur mit Bedeutung, wie in DeltaMaster:
+// Blau für Kennzahlen, die das Ergebnis verbessern (Umsatz, Buchungen), Rot für
+// Kennzahlen zu seinen Lasten (Stornierungen), Grau ohne Wertung. Werte stehen in
+// der aufgehellten Stufe; das volle Blau/Rot bleibt Abweichungen (besser/schlechter)
+// und dem Bezugsmonat vorbehalten. Petrol markiert die aktive Auswahl.
 
 const FARBE = {
   tinte: "#1b1b1b",
   grau: "#6f6f6f",
-  balken: "#5f5f5f",
-  balkenHell: "#c4c4c4",
-  storno: "#a84b2f",
-  stornoHell: "#dcb3a3",
   akzent: "#20808d",
   raster: "#e6e6e6",
   fuehrung: "#cfcfcf",
-  besser: "#2f7fbf",   // Signal: betriebswirtschaftlich besser als der Vergleichswert
-  schlechter: "#c8412b", // Signal: schlechter
+  besser: "#2f7fbf",     // Blau: gut für das Ergebnis bzw. besser als der Vergleichswert
+  schlechter: "#c8412b", // Rot: zu Lasten des Ergebnisses bzw. schlechter
 };
+// Helligkeitsstufen: 1 = voll (Signal, Bezugsmonat), Werte aufgehellt, außerhalb des Filters hell.
+const STUFE = { wert: 0.6, hell: 0.3 };
+
+// Farbe einer Kennzahl nach ihrer Wirkung auf das Ergebnis ("hoeherBesser": true = blau,
+// false = rot, null = grau); stufe < 1 mischt die Farbe mit Weiß.
+function kennzahlFarbe(hoeherBesser, stufe = 1) {
+  const voll = hoeherBesser == null ? FARBE.tinte : hoeherBesser ? FARBE.besser : FARBE.schlechter;
+  return d3.interpolateRgb("#ffffff", voll)(stufe);
+}
 
 const schmal = () => window.innerWidth < 600;
 // Alle Balkendiagramme teilen sich diese Beschriftungsbreite, damit Balken und
@@ -77,7 +84,7 @@ function balken(element, daten, o) {
     Plot.ruleY(zeilen, { y: o.kategorie, x1: 0, x2: maximum, stroke: FARBE.fuehrung, strokeDasharray: "1,3" }),
     Plot.barX(zeilen, {
       x: o.wert, y: o.kategorie,
-      fill: (d) => (o.aktiv != null && d[o.kategorie] === o.aktiv ? FARBE.akzent : (o.farbeVon ? o.farbeVon(d) : o.farbe || FARBE.balken)),
+      fill: (d) => (o.aktiv != null && d[o.kategorie] === o.aktiv ? FARBE.akzent : (o.farbeVon ? o.farbeVon(d) : o.farbe || kennzahlFarbe(true, STUFE.wert))),
       title: o.tipp, render: klickbar(zeilen, o.beiKlick),
     }),
     Plot.text(zeilen, { x: o.wert, y: o.kategorie, text: (d) => o.format(d[o.wert]) + (o.zusatz ? o.zusatz(d) : ""), dx: 6, textAnchor: "start", fill: FARBE.grau, fontSize: 12.5 }),
@@ -119,7 +126,7 @@ function balkenPaar(element, daten, o) {
     style: { fontSize: "13px", color: FARBE.tinte },
     marks: [
       Plot.ruleY(lang, { y: o.kategorie, x1: 0, x2: maximum * 1.55, stroke: FARBE.fuehrung, strokeDasharray: "1,3" }),
-      Plot.barX(lang, { x: "anteil", y: o.kategorie, fill: (d) => (o.aktiv != null && d[o.kategorie] === o.aktiv ? FARBE.akzent : FARBE.balken), title: o.tipp, render: klickbar(lang, o.beiKlick) }),
+      Plot.barX(lang, { x: "anteil", y: o.kategorie, fill: (d) => (o.aktiv != null && d[o.kategorie] === o.aktiv ? FARBE.akzent : kennzahlFarbe(true, STUFE.wert)), title: o.tipp, render: klickbar(lang, o.beiKlick) }),
       Plot.text(lang, { x: "anteil", y: o.kategorie, text: (d) => prozent0(d.anteil) + "  (" + d.absolut + ")", dx: 6, textAnchor: "start", fill: FARBE.grau, fontSize: 12.5 }),
       Plot.tip(lang, Plot.pointerY({ x: "anteil", y: o.kategorie, title: o.tipp })),
     ],
@@ -171,9 +178,10 @@ function beschriftungsMarks(gehoben, format) {
 }
 
 // Säulen je Monat mit Versatzstück zum Vorjahresmonat (IBCS). Die Säule zeigt immer den
-// Ist-Wert. Liegt er über dem Vorjahresmonat, ist der Teil oberhalb des Vorjahreswerts
-// gefüllt; liegt er darunter, zeigt ein Umriss über der Säule den Fehlbetrag bis zum
-// Vorjahreswert. Blau = betriebswirtschaftlich besser, Rot = schlechter.
+// Ist-Wert in der aufgehellten Farbe der Kennzahl. Liegt er über dem Vorjahresmonat, ist
+// der Teil oberhalb des Vorjahreswerts im vollen Signalton gefüllt; liegt er darunter,
+// sitzt der Fehlbetrag bis zum Vorjahreswert als gefülltes Stück über der Säule (hohle
+// Säulen stehen bei IBCS für Plan- und Prognosewerte). Blau = besser, Rot = schlechter.
 // daten: [{datum, wert, vorjahr, vormonat, imFilter, bezug}]; Optionen: format, hoeherBesser, hoehe, klickMonat, tipp.
 function saeulen(element, daten, o) {
   const istBesser = (d) => (o.hoeherBesser ? d.wert >= d.vorjahr : d.wert <= d.vorjahr);
@@ -196,10 +204,10 @@ function saeulen(element, daten, o) {
     style: { fontSize: "12px", color: FARBE.grau },
     marks: [
       Plot.ruleX(jahresmarken(bereich), { stroke: FARBE.fuehrung, strokeDasharray: "2,3" }),
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: kennzahlFarbe(o.hoeherBesser, STUFE.wert), fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
       Plot.rectY(ueberschuss, { x: "datum", interval: "month", y1: "vorjahr", y2: "wert", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
-      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: "none", stroke: farbe, strokeWidth: 1.6, strokeOpacity: deckkraft, insetLeft: inset + 0.8, insetRight: inset + 0.8 }),
+      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
       ...beschriftungsMarks(gehoben, (d) => o.format(d.wert)),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: "wert", title: o.tipp })),
@@ -207,8 +215,8 @@ function saeulen(element, daten, o) {
   });
 }
 
-// Gestapelte Säulen je Monat: unten der realisierte Betrag (grau), oben der durch
-// Stornierung entgangene (rotbraun). daten: [{datum, realisiert, storniert, imFilter}].
+// Gestapelte Säulen je Monat: unten der stornobereinigte Umsatz (blau), oben der durch
+// Stornierung entgangene (rot). daten: [{datum, realisiert, storniert, imFilter}].
 function gestapelteSaeulen(element, daten, o) {
   const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
   const deckkraft = (d) => (d.imFilter === false ? 0.35 : 1);
@@ -224,9 +232,9 @@ function gestapelteSaeulen(element, daten, o) {
     style: { fontSize: "12px", color: FARBE.grau },
     marks: [
       Plot.ruleX(jahresmarken(bereich), { stroke: FARBE.fuehrung, strokeDasharray: "2,3" }),
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "realisiert", fill: FARBE.balken, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "realisiert", fill: kennzahlFarbe(true, STUFE.wert), fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
-      Plot.rectY(daten, { x: "datum", interval: "month", y1: "realisiert", y2: (d) => d.realisiert + d.storniert, fill: FARBE.storno, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
+      Plot.rectY(daten, { x: "datum", interval: "month", y1: "realisiert", y2: (d) => d.realisiert + d.storniert, fill: kennzahlFarbe(false, STUFE.wert), fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
       ...beschriftungsMarks(gehoben, (d) => kurz(gesamt(d))),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: (d) => d.realisiert + d.storniert, title: o.tipp })),
@@ -273,10 +281,11 @@ function tooltipAnheften(svg, naechste, text) {
 }
 
 // Winzige Säulen ab null für Kacheln und Tabellenzeilen: gleiche Zeitachse für alle,
-// Skala je Kennzahl von null bis zum Maximum; der Bezugsmonat ist dunkel, Monate außerhalb des Filters hell.
+// Skala je Kennzahl von null bis zum Maximum, Farbe nach der Wirkung der Kennzahl (o.hoeherBesser);
+// der Bezugsmonat ist gesättigt, Monate außerhalb des Filters sind hell.
 // Hover oder Tippen zeigt Monat, Wert und die Veränderung zum Vormonat und Vorjahresmonat.
 function minisaeulen(daten, o = {}) {
-  const farbe = (d) => (d.bezug ? (o.farbe || FARBE.tinte) : d.imFilter === false ? FARBE.balkenHell : (o.farbe || FARBE.balken));
+  const farbe = (d) => kennzahlFarbe(o.hoeherBesser, d.bezug ? 1 : d.imFilter === false ? STUFE.hell : STUFE.wert);
   const format = o.format || zahl;
   const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
   const svg = Plot.plot({

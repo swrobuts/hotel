@@ -13,25 +13,27 @@ const ZEITFILTER = ["jahr", "von", "bis"];
 // Routen, die mit allen Filtern geladen werden
 const ROUTEN = ["kennzahlen", "segmente", "kanaele", "kautionen", "vorlaufzeit", "segment_kundentyp", "laender", "laender_hotel"];
 
-// Die zehn Kennzahlen des Katalogs: Feldname, Titel, Formate, Richtung ("hoeherBesser": true = mehr ist gut,
-// false = weniger ist gut, null = ohne Wertung) und Definition.
+// Die zehn Kennzahlen des Katalogs: Feldname, Titel, Formate und Wirkung auf das Ergebnis
+// ("hoeherBesser": true = mehr ist gut, false = weniger ist gut, null = ohne Wertung).
+// Die Wirkung bestimmt die Farbe wie in DeltaMaster: blau für Umsatz und alles, was das
+// Ergebnis verbessert, rot für alles, was zu seinen Lasten geht (Stornierungen), grau ohne Wertung.
 const KPIS = [
-  { feld: "erloes_nicht_storniert", titel: "Umsatz in €", kurztitel: "Umsatz in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "revenue der nicht stornierten Buchungen; revenue = adr × total_nights" },
-  { feld: "gesamterloes", titel: "Gebuchter Umsatz in €", kurztitel: "Gebucht in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "Summe von revenue über alle Buchungen, vor Stornierung" },
-  { feld: "anzahl_buchungen", titel: "Anzahl Buchungen", kurztitel: "Buchungen", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Zeilen der Faktentabelle" },
-  { feld: "stornoquote", titel: "Stornoquote", kurztitel: "Storno", format: prozent, kachel: prozent, hoeherBesser: false, klasse: "storno", definition: "Anteil der Buchungen mit is_canceled = 1" },
-  { feld: "adr", titel: "Ø Zimmerpreis (ADR) in €", kurztitel: "Ø ADR in €", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von adr (Average Daily Rate)" },
-  { feld: "aufenthaltsdauer", titel: "Ø Aufenthalt in Nächten", kurztitel: "Ø Nächte", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von total_nights" },
-  { feld: "vorlaufzeit", titel: "Ø Vorlaufzeit in Tagen", kurztitel: "Ø Vorlauf (Tage)", format: dezimal1, kachel: dezimal1, hoeherBesser: null, definition: "Mittelwert von lead_time" },
-  { feld: "zimmernaechte", titel: "Gebuchte Zimmernächte", kurztitel: "Zimmernächte", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Summe von total_nights; Ersatz für die Auslastung, weil die Kapazität fehlt" },
-  { feld: "wiederholungsgaeste", titel: "Wiederholungsgast-Anteil", kurztitel: "Wiederholungsgäste", format: prozent, kachel: prozent, hoeherBesser: true, definition: "Anteil der Buchungen mit is_repeated_guest = 1" },
-  { feld: "sonderwuensche", titel: "Anteil mit Sonderwünschen", kurztitel: "Sonderwünsche", format: prozent, kachel: prozent, hoeherBesser: null, definition: "Anteil der Buchungen mit total_of_special_requests > 0" },
+  { feld: "erloes_nicht_storniert", titel: "Stornobereinigter Umsatz in €", format: zahl, kachel: kurz, hoeherBesser: true },
+  { feld: "gesamterloes", titel: "Gebuchter Umsatz in €", format: zahl, kachel: kurz, hoeherBesser: true },
+  { feld: "anzahl_buchungen", titel: "Anzahl Buchungen", format: zahl, kachel: zahl, hoeherBesser: true },
+  { feld: "stornoquote", titel: "Stornoquote", format: prozent, kachel: prozent, hoeherBesser: false },
+  { feld: "adr", titel: "Ø Zimmerpreis (ADR) in €", format: dezimal, kachel: dezimal, hoeherBesser: true },
+  { feld: "aufenthaltsdauer", titel: "Ø Aufenthalt in Nächten", format: dezimal, kachel: dezimal, hoeherBesser: true },
+  { feld: "vorlaufzeit", titel: "Ø Vorlaufzeit in Tagen", format: dezimal1, kachel: dezimal1, hoeherBesser: null },
+  { feld: "zimmernaechte", titel: "Gebuchte Zimmernächte", format: zahl, kachel: zahl, hoeherBesser: true },
+  { feld: "wiederholungsgaeste", titel: "Wiederholungsgast-Anteil", format: prozent, kachel: prozent, hoeherBesser: true },
+  { feld: "sonderwuensche", titel: "Anteil mit Sonderwünschen", format: prozent, kachel: prozent, hoeherBesser: null },
 ];
 const KACHEL_KPIS = KPIS.slice(0, 6);
 
 const zustand = {
   filter: {}, daten: {},
-  sortierung: { laender: { feld: "anzahl", absteigend: true }, pivot: { feld: "gesamt", absteigend: true }, kennzahlen: { feld: "reihenfolge", absteigend: false }, hotelvergleich: { feld: "reihenfolge", absteigend: false } },
+  sortierung: { laender: { feld: "anzahl", absteigend: true }, pivot: { feld: "gesamt", absteigend: true }, kennzahlen: { feld: "reihenfolge", absteigend: false } },
   gruppierung: { laender: "", pivot: "" },
 };
 
@@ -313,7 +315,6 @@ function allesZeichnen() {
     figur.querySelector(".deutung-text").innerHTML = `<h4>Interpretation</h4><p>${interpretation}</p><h4>Handlungsempfehlung</h4><p>${empfehlung}</p>`;
   }
   kachelnZeichnen(d);
-  hotelvergleichZeichnen(d);
   kennzahlentabelleZeichnen(d);
   zeitverlaufZeichnen(d);
   vertriebZeichnen(d);
@@ -340,40 +341,17 @@ function kachelnZeichnen(d) {
     const b = r.find((z) => z.bezug);
     const kachel = document.createElement("div");
     kachel.className = "kachel";
-    kachel.innerHTML = `<div class="kachel-titel">${kpi.titel}</div><div class="kachel-wert ${kpi.klasse || ""}">${k.anzahl_buchungen ? kpi.kachel(k[kpi.feld]) : "–"}</div>`
+    kachel.innerHTML = `<div class="kachel-titel">${kpi.titel}</div><div class="kachel-wert">${k.anzahl_buchungen ? kpi.kachel(k[kpi.feld]) : "–"}</div>`
       + `<div class="kachel-vergleich">${d.zeitraumText.replace("Anreisen ", "").replace("Anreisejahr ", "").replace("Anreisemonat ", "")}</div>`
       + `<div class="kachel-verlauf"></div>`
       + (b ? abweichungHtml("Vormonat", b.dVormonat, kpi.hoeherBesser) + abweichungHtml("Vorjahresmonat", b.dVorjahr, kpi.hoeherBesser) : "");
-    if (r.length > 1) kachel.querySelector(".kachel-verlauf").append(minisaeulen(r, { breite: 200, hoehe: 36, format: kpi.format, farbe: kpi.klasse === "storno" ? FARBE.storno : undefined }));
+    if (r.length > 1) kachel.querySelector(".kachel-verlauf").append(minisaeulen(r, { breite: 200, hoehe: 36, format: kpi.format, hoeherBesser: kpi.hoeherBesser }));
     kasten.append(kachel);
   }
   const b = d.bezug;
   document.getElementById("kacheln-hinweis").textContent = b
-    ? `Mini-Säulen: Juli 2015 bis August 2017 ab null, gleiche Zeitachse in allen Kacheln, hell = außerhalb des Zeitfilters. Abweichungen: ${MONATE_LANG[b.monat - 1]} ${b.jahr} gegenüber Vormonat und Vorjahresmonat; blau = betriebswirtschaftlich besser, rot = schlechter, grau = ohne Wertung.`
+    ? `Mini-Säulen ab null mit gleicher Zeitachse (Juli 2015 bis August 2017); hell = außerhalb des Zeitfilters, gesättigt = Bezugsmonat. Farben wie in DeltaMaster: blau = mehr ist gut für das Ergebnis, rot = mehr geht zu seinen Lasten, grau = ohne Wertung; das gilt für die Säulen wie für die Abweichungen (${MONATE_LANG[b.monat - 1]} ${b.jahr} gegenüber Vormonat und Vorjahresmonat).`
     : "";
-}
-
-// Kompakte Vergleichstabelle: Hotels als Zeilen, Kennzahlen als Spalten, Summenzeile "beide Hotels".
-function hotelvergleichZeichnen(d) {
-  const zeilen = d.hotels.map((z, i) => ({ reihenfolge: i, hotel: z.hotel, roh: z, ...kennzahlenAus(z) }));
-  const beide = d.hotelvergleich.beide;
-  const besser = (kpi) => {
-    if (kpi.hoeherBesser == null || zeilen.length < 2) return null;
-    return d3[kpi.hoeherBesser ? "greatest" : "least"](zeilen, (z) => z[kpi.feld])?.hotel;
-  };
-  const spalten = [
-    { feld: "hotel", titel: "Hotel", format: (w) => w, aggregat: () => "beide Hotels" },
-    ...KPIS.slice(0, 8).map((kpi) => ({
-      feld: kpi.feld, titel: kpi.kurztitel, numerisch: true,
-      format: (w, z) => (z.hotel === besser(kpi) ? `<span class="wert-besser">${kpi.format(w)}</span>` : kpi.format(w)),
-      aggregat: () => beide[kpi.feld],
-    })),
-  ];
-  tabelleBauen(document.getElementById("tabelle-hotelvergleich"), spalten, zeilen, {
-    sortierung: zustand.sortierung.hotelvergleich, gruppierung: null, summenzeile: true,
-    aktiv: (z) => z.hotel === zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel),
-    beiSortierung: (s) => { zustand.sortierung.hotelvergleich = s; hotelvergleichZeichnen(d); },
-  });
 }
 
 // Grafische Tabelle aller zehn Kennzahlen: je Hotel, beide Hotels, Verlauf als Mini-Säulen,
@@ -383,25 +361,18 @@ function kennzahlentabelleZeichnen(d) {
   const zeilen = KPIS.map((kpi, i) => {
     const r = reihe(d.monate, kpi.feld), b = r.find((z) => z.bezug);
     const imFilter = r.filter((z) => z.imFilter).map((z) => z.wert);
-    const zeile = { reihenfolge: i, kpi, kennzahl: kpi.titel, definition: kpi.definition, verlauf: r,
+    const zeile = { reihenfolge: i, kpi, kennzahl: kpi.titel, verlauf: r,
       dVormonat: b?.dVormonat ?? null, dVorjahr: b?.dVorjahr ?? null,
       minimum: imFilter.length ? d3.min(imFilter) : null, maximum: imFilter.length ? d3.max(imFilter) : null, beide: hv.beide[kpi.feld] };
     for (const hotel of hotels) zeile[hotel] = hv[hotel.replace(" Hotel", "")]?.[kpi.feld] ?? null;
-    if (hotels.length === 2 && kpi.hoeherBesser != null) {
-      const [a, b2] = hotels.map((h) => zeile[h]);
-      zeile.besser = a == null || b2 == null ? null : (kpi.hoeherBesser ? a >= b2 : a <= b2) ? hotels[0] : hotels[1];
-    }
     return zeile;
   });
-  const hotelSpalte = (hotel) => ({
-    feld: hotel, titel: hotel, numerisch: true,
-    format: (w, z) => (z.besser === hotel ? `<span class="wert-besser">${z.kpi.format(w)}</span>` : z.kpi.format(w)),
-  });
+  const hotelSpalte = (hotel) => ({ feld: hotel, titel: hotel, numerisch: true, format: (w, z) => z.kpi.format(w) });
   const spalten = [
-    { feld: "kennzahl", titel: "Kennzahl", format: (w, z) => `${w}<span class="definition">${z.definition}</span>` },
+    { feld: "kennzahl", titel: "Kennzahl", format: (w) => w },
     ...hotels.map(hotelSpalte),
     { feld: "beide", titel: "beide Hotels", numerisch: true, format: (w, z) => z.kpi.format(w) },
-    { feld: "verlauf", titel: "Verlauf je Monat", format: () => "", zeichnen: (z) => (z.verlauf.length > 1 ? minisaeulen(z.verlauf, { breite: 160, hoehe: 30, format: z.kpi.format, farbe: z.kpi.klasse === "storno" ? FARBE.storno : undefined }) : null) },
+    { feld: "verlauf", titel: "Verlauf je Monat", format: () => "", zeichnen: (z) => (z.verlauf.length > 1 ? minisaeulen(z.verlauf, { breite: 160, hoehe: 30, format: z.kpi.format, hoeherBesser: z.kpi.hoeherBesser }) : null) },
     { feld: "dVormonat", titel: "vs. Vormonat", numerisch: true, format: (w, z) => abweichungHtml("", w, z.kpi.hoeherBesser) },
     { feld: "dVorjahr", titel: "vs. Vorjahresmonat", numerisch: true, format: (w, z) => abweichungHtml("", w, z.kpi.hoeherBesser) },
     { feld: "minimum", titel: "Minimum", numerisch: true, format: (w, z) => z.kpi.format(w) },
@@ -422,7 +393,7 @@ function saeulenTipp(titel, format) {
 // Versatzstück zum Vorjahresmonat blau, wenn besser, rot, wenn schlechter.
 function zeitverlaufZeichnen(d) {
   const felder = [["zeit-buchungen", "Anzahl Buchungen", "anzahl_buchungen", zahl, true, false],
-    ["zeit-erloes", "Umsatz in EUR", "erloes_nicht_storniert", kurz, true, false],
+    ["zeit-erloes", "Stornobereinigter Umsatz in EUR", "erloes_nicht_storniert", kurz, true, false],
     ["zeit-storno", "Stornoquote", "stornoquote", prozent0, false, true]];
   if (d.monate.length < 2) { for (const [id] of felder) document.getElementById(id).replaceChildren(); return; }
   for (const [id, titel, feld, format, hoeherBesser] of felder) {
@@ -481,7 +452,7 @@ function stornoZeichnen(d) {
   const referenz = d.kennzahlen.stornoquote;
   const tipp = (dimension, kategorie) => (z) => `${klarname(dimension, z[kategorie])}\nStornoquote ${prozent(z.stornoquote)} (${zahl(z.stornierungen)} von ${zahl(z.anzahl)} Buchungen)\n`
     + `${dezimal1(Math.abs(z.stornoquote - referenz) * 100)} Prozentpunkte ${z.stornoquote >= referenz ? "über" : "unter"} der Quote insgesamt`;
-  const gemeinsam = { wert: "stornoquote", format: prozent0, farbe: FARBE.storno, domain: [0, 1.15], referenz };
+  const gemeinsam = { wert: "stornoquote", format: prozent0, farbe: kennzahlFarbe(false, STUFE.wert), domain: [0, 1.15], referenz };
   zeichnen("storno-hotel", (el) => balken(el, d.hotels, { ...gemeinsam, kategorie: "hotel", klarname: (w) => klarname("hotel", w), aktiv: zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel), tipp: tipp("hotel", "hotel") }));
   zeichnen("storno-kaution", (el) => balken(el, d.kautionen, { ...gemeinsam, kategorie: "kaution", klarname: (w) => klarname("kaution", w), aktiv: zustand.filter.kaution, beiKlick: (z) => filterSetzen("kaution", z.kaution), tipp: tipp("kaution", "kaution") }));
   zeichnen("storno-segment", (el) => balken(el, d.segmente, { ...gemeinsam, kategorie: "segment", klarname: (w) => klarname("segment", w), aktiv: zustand.filter.segment, beiKlick: (z) => filterSetzen("segment", z.segment), tipp: tipp("segment", "segment") }));
@@ -503,7 +474,7 @@ function herkunftZeichnen(d) {
   if (rest.length) top.push({ land: `übrige ${rest.length} Länder`, anzahl: d3.sum(rest, (z) => z.anzahl), rest: true });
   const tipp = (z) => (z.rest ? `${z.land}: ${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})` : dimensionTipp("land", "land", gesamt)(z));
   zeichnen("balken-laender", (el) => balken(el, top, { kategorie: "land", wert: "anzahl", format: zahl, sortieren: false, aktiv: zustand.filter.land,
-    klarname: (w) => (w.startsWith("übrige") ? w : klarname("land", w)), farbeVon: (z) => (z.rest ? FARBE.balkenHell : FARBE.balken),
+    klarname: (w) => (w.startsWith("übrige") ? w : klarname("land", w)), farbeVon: (z) => kennzahlFarbe(true, z.rest ? STUFE.hell : STUFE.wert),
     beiKlick: (z) => { if (!z.rest) filterSetzen("land", z.land); }, zusatz: (z) => "  (" + prozent(z.anzahl / gesamt) + ")", tipp }));
   laendertabelleZeichnen(d);
 }
