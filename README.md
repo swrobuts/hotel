@@ -42,6 +42,12 @@ Auf den Colab-Link oben klicken. Das Notebook lädt die Rohdaten aus dem Netz,
 braucht keine Installation und liest in Abschnitt 7.1 aus der Datenbank. Zum
 Bearbeiten *Datei → Kopie in Drive speichern*.
 
+Die Zugangsdaten stehen nicht im Notebook, sondern im Secrets-Panel von Colab
+(Schlüsselsymbol links): Secret `HOTEL_DB_URL` mit dem Wert
+`postgresql://studi_hotel:thws@supabase.butscher.cloud:5433/hotel` anlegen und
+*Zugriff auf Notebook* einschalten. Lokal in Jupyter genügt die Umgebungsvariable
+`HOTEL_DB_URL` mit demselben Wert.
+
 ### Power BI Desktop
 
 1. *Start → Daten abrufen → Weitere… → Datenbank → PostgreSQL-Datenbank*.
