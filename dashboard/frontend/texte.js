@@ -81,7 +81,7 @@ function aussagen(d) {
       : `${zahl(k.anzahl_buchungen)} Buchungen, ${prozent(k.stornoquote)} storniert, ${dezimal(k.adr)} EUR mittlerer Zimmerpreis`,
       beschreibung("Die zehn Kennzahlen des Katalogs je Hotel und für beide zusammen, mit Verlauf je Anreisemonat und Abweichung zum Vormonat und Vorjahresmonat")],
     zeitverlauf: [spitze ? `${monatLang(spitze)} war der stärkste Anreisemonat: ${zahl(spitze.anzahl_buchungen)} Buchungen${erloesSpitze ? `; höchster Umsatz im ${monatLang(erloesSpitze)} (${kurz(erloesSpitze.erloes_nicht_storniert)} EUR)` : ""}` : "Kein Zeitverlauf verfügbar",
-      beschreibung("Anzahl Buchungen, stornobereinigter Umsatz in EUR und Stornoquote je Anreisemonat; Versatzstück = Abweichung zum Vorjahresmonat")],
+      beschreibung("Anzahl Buchungen, stornobereinigter Umsatz in EUR und Stornoquote je Anreisemonat, jeweils mit dem Vorjahresmonat als graue Säule dahinter")],
     segment: [top ? `${klarname("segment", top.segment)}: ${anteil(top.anzahl, d3.sum(d.segmente, (z) => z.anzahl))} der Buchungen, ${anteil(top.erloes_nicht_storniert, d3.sum(d.segmente, (z) => z.erloes_nicht_storniert))} des Umsatzes${abweicher(d.segmente, "segment")}` : "Keine Buchungen",
       beschreibung("Je Marktsegment der Anteil an den Buchungen neben dem Anteil am stornobereinigten Umsatz, gleiche Skala, absolute Werte in Klammern")],
     kanal: [kanal ? `${klarname("kanal", kanal.kanal)}: ${anteil(kanal.erloes_nicht_storniert, d3.sum(d.kanaele, (z) => z.erloes_nicht_storniert))} des Umsatzes bei ${anteil(kanal.anzahl, d3.sum(d.kanaele, (z) => z.anzahl))} der Buchungen${abweicher(d.kanaele, "kanal")}` : "Keine Buchungen",
@@ -133,7 +133,7 @@ function deutungen(d) {
   T.zeitverlauf = m.length < 2 ? ["Zu wenige Monate für eine Interpretation.", "Zeitraum erweitern."] : [
     `Buchungen zwischen ${zahl(tief.anzahl_buchungen)} (${monatLang(tief)}) und ${zahl(spitze.anzahl_buchungen)} (${monatLang(spitze)}); `
     + `der Umsatz ist im ${monatLang(erloesSpitze)} am höchsten (${kurz(erloesSpitze.erloes_nicht_storniert)} EUR). `
-    + `Blaue Versatzstücke zeigen Verbesserungen gegenüber dem Vorjahresmonat, rote Verschlechterungen. Die Stornoquote schwankt zwischen ${prozent(stornoTief.stornoquote)} und ${prozent(stornoSpitze.stornoquote)}.`,
+    + `Blau markiert Monate, die besser als der Vorjahresmonat waren, rot schlechtere. Die Stornoquote schwankt zwischen ${prozent(stornoTief.stornoquote)} und ${prozent(stornoSpitze.stornoquote)}.`,
     `Planung an der Saisonkurve ausrichten; Prognosen auf 2016 stützen, das einzige vollständige Jahr. Überbuchung am Monatswert der Stornoquote kalibrieren; Tiefmonate über Preis und Pakete stützen statt Hochsaison zu rabattieren.`,
   ];
 

@@ -68,6 +68,7 @@ td .definition-inline { font-size: 11.5px; color: var(--hell); margin-left: 4px;
 .signal.besser { background: var(--blau); }
 .signal.schlechter { background: var(--rot); }
 .signal.grau { background: #777777; }
+.signal.vorjahr { background: #c6c6c6; }
 /* Werte in der aufgehellten Stufe (STUFE.wert = 0,6 in diagramme.js) */
 .signal.wert-gut { background: #82b2d9; }
 .signal.wert-schlecht { background: #de8d80; }

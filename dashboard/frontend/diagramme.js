@@ -14,6 +14,7 @@ const FARBE = {
   akzent: "#20808d",
   raster: "#e6e6e6",
   fuehrung: "#cfcfcf",
+  vorjahr: "#c6c6c6",    // Vergleichssäule Vorjahresmonat (IBCS: Vorjahr grau)
   besser: "#2f7fbf",     // Blau: gut für das Ergebnis bzw. besser als der Vergleichswert
   schlechter: "#c8412b", // Rot: zu Lasten des Ergebnisses bzw. schlechter
 };
@@ -177,22 +178,24 @@ function beschriftungsMarks(gehoben, format) {
   ];
 }
 
-// Säulen je Monat mit Versatzstück zum Vorjahresmonat (IBCS). Die Säule zeigt immer den
-// Ist-Wert in der aufgehellten Farbe der Kennzahl. Liegt er über dem Vorjahresmonat, ist
-// der Teil oberhalb des Vorjahreswerts im vollen Signalton gefüllt; liegt er darunter,
-// sitzt der Fehlbetrag bis zum Vorjahreswert als gefülltes Stück über der Säule (hohle
-// Säulen stehen bei IBCS für Plan- und Prognosewerte). Blau = besser, Rot = schlechter.
+// Säulen je Monat mit dem Vorjahresmonat als Versatz (IBCS: die Vergleichssäule steht grau
+// und versetzt hinter der Ist-Säule). Die Ist-Säule zeigt den Monatswert in der aufgehellten
+// Farbe der Kennzahl; die Differenz zum Vorjahresmonat trägt den vollen Signalton: liegt der
+// Ist-Wert darüber, ist das obere Stück der Ist-Säule gefärbt, liegt er darunter, das Stück
+// der Vorjahressäule, das hinter der Ist-Säule hervorragt. Blau = besser, Rot = schlechter.
 // daten: [{datum, wert, vorjahr, vormonat, imFilter, bezug}]; Optionen: format, hoeherBesser, hoehe, klickMonat, tipp.
 function saeulen(element, daten, o) {
   const istBesser = (d) => (o.hoeherBesser ? d.wert >= d.vorjahr : d.wert <= d.vorjahr);
   const farbe = (d) => (istBesser(d) ? FARBE.besser : FARBE.schlechter);
-  const mitVorjahr = daten.filter((d) => d.vorjahr != null && d.wert !== d.vorjahr);
+  const mitVorjahr = daten.filter((d) => d.vorjahr != null);
   const ueberschuss = mitVorjahr.filter((d) => d.wert > d.vorjahr);
   const fehlbetrag = mitVorjahr.filter((d) => d.wert < d.vorjahr);
   const deckkraft = (d) => (d.imFilter === false ? 0.35 : 1);
   const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
   const breite = breiteVon(element), links = schmal() ? 56 : 72, rechts = 24;
   const inset = saeulenabstand(breite, daten.length, links + rechts);
+  // Die Vorjahressäule steht um diesen Betrag nach links versetzt hinter der Ist-Säule.
+  const versatz = { insetLeft: inset * 0.3, insetRight: inset * 1.7 };
   // Beschriftet werden erster Monat, Minimum, Maximum und Bezugsmonat.
   const beschriftet = [...new Set([daten[0], d3.least(daten, (d) => d.wert), d3.greatest(daten, (d) => d.wert), daten.find((d) => d.bezug)].filter(Boolean))];
   const oben = (d) => (d.vorjahr != null ? Math.max(d.wert, d.vorjahr) : d.wert);
@@ -204,10 +207,11 @@ function saeulen(element, daten, o) {
     style: { fontSize: "12px", color: FARBE.grau },
     marks: [
       Plot.ruleX(jahresmarken(bereich), { stroke: FARBE.fuehrung, strokeDasharray: "2,3" }),
+      Plot.rectY(mitVorjahr, { x: "datum", interval: "month", y1: 0, y2: "vorjahr", fill: FARBE.vorjahr, fillOpacity: deckkraft, ...versatz }),
+      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: deckkraft, ...versatz }),
       Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: kennzahlFarbe(o.hoeherBesser, STUFE.wert), fillOpacity: deckkraft, insetLeft: inset, insetRight: inset,
         render: klickbar(daten, (d) => o.klickMonat && o.klickMonat(d.datum)) }),
       Plot.rectY(ueberschuss, { x: "datum", interval: "month", y1: "vorjahr", y2: "wert", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
-      Plot.rectY(fehlbetrag, { x: "datum", interval: "month", y1: "wert", y2: "vorjahr", fill: farbe, fillOpacity: deckkraft, insetLeft: inset, insetRight: inset }),
       ...beschriftungsMarks(gehoben, (d) => o.format(d.wert)),
       Plot.ruleY([0], { stroke: FARBE.grau }),
       Plot.tip(daten, Plot.pointerX({ x: "datum", y: "wert", title: o.tipp })),
