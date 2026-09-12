@@ -10,8 +10,12 @@ Der Datensatz umfasst 119.390 Buchungen eines Stadthotels und eines Resorthotels
 in Portugal (Anreisen Juli 2015 bis August 2017).
 
 **Interaktives Dashboard:** <https://hotel-dashboard-cuoi.onrender.com> — liest
-live aus der Datenbank, Kreuzfilterung per Klick, Weltkarte, SQL je Diagramm
+live aus der Datenbank, Kreuzfilterung per Klick, SQL je Diagramm
 (Beschreibung in [`dashboard/README.md`](dashboard/README.md)).
+
+**Lernumgebung Hotel-Lab:** <https://swrobuts.github.io/Hotel-Lab/> — zehn Labs, die
+das Projekt Schritt für Schritt erklären, mit 48 Übungen und dem Sternschema als
+PostgreSQL im Browser (Repo [swrobuts/Hotel-Lab](https://github.com/swrobuts/Hotel-Lab)).
 
 ## Zugang zur Datenbank
 
