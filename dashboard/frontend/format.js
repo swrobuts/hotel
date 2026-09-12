@@ -13,9 +13,14 @@ function zahl(wert) {
   return wert == null ? "–" : ZAHL.format(wert);
 }
 
-// Anteil als Prozent mit einer Nachkommastelle: 0.3704 -> "37,0 %".
+// Anteil als Prozent mit einer Nachkommastelle: 0.3704 -> "37,0 %" (Kacheln, Tabellen, Texte).
 function prozent(wert) {
   return wert == null ? "–" : ZAHL_1.format(wert * 100) + " %";
+}
+
+// Anteil als Prozent ohne Nachkommastelle: 0.3704 -> "37 %" (Achsen und Beschriftungen in Diagrammen).
+function prozent0(wert) {
+  return wert == null ? "–" : ZAHL.format(wert * 100) + " %";
 }
 
 // Betrag mit zwei Nachkommastellen: 101.8311 -> "101,83".

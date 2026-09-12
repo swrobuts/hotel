@@ -12,6 +12,15 @@ const monatLang = (m) => MONATE_LANG[m.monat - 1] + " " + m.jahr;
 // Text nur, wenn die Bedingung gilt; als Funktion übergeben, damit er nicht vorab ausgewertet wird.
 const wenn = (bedingung, text) => (bedingung ? (typeof text === "function" ? text() : text) : "");
 
+// Nennt die Kategorie, deren Umsatzanteil am stärksten vom Buchungsanteil abweicht (mindestens 2 Prozentpunkte).
+function abweicher(zeilen, dimension) {
+  const gesamtAnzahl = d3.sum(zeilen, (z) => z.anzahl), gesamtErloes = d3.sum(zeilen, (z) => z.erloes);
+  const mitDelta = zeilen.map((z) => ({ ...z, delta: z.erloes / gesamtErloes - z.anzahl / gesamtAnzahl }));
+  const groesster = d3.greatest(mitDelta, (z) => Math.abs(z.delta));
+  if (!groesster || Math.abs(groesster.delta) < 0.02) return "";
+  return ` – ${klarname(dimension, groesster[dimension])} bringt ${groesster.delta > 0 ? "mehr" : "weniger"} Erlös als Buchungen (${dezimal1(Math.abs(groesster.delta) * 100)} Prozentpunkte)`;
+}
+
 // Summiert die Monate über alle Jahre und nennt die zwei stärksten und den schwächsten Monat.
 function saisonprofil(monate) {
   const summen = d3.rollups(monate, (z) => d3.sum(z, (x) => x.anzahl_buchungen), (z) => z.monat).map(([monat, anzahl]) => ({ monat, anzahl }));
@@ -85,10 +94,10 @@ function aussagen(d) {
       beschreibung("Anzahl Buchungen, Gesamterlös in EUR und Stornoquote je Anreisemonat; Versatzstück = Abweichung zum Vorjahresmonat")],
     saison: [d.saison ? `Über die Jahre summiert sind ${liste(d.saison.spitzen)} die stärksten Monate, ${d.saison.tief} der schwächste` : "Kein Saisonverlauf verfügbar",
       beschreibung("Anzahl Buchungen je Anreisemonat, Jahre als Linien in Graustufen (2015 hell, 2017 dunkel)")],
-    segment: [top ? `${klarname("segment", top.segment)}: ${anteil(top.anzahl, d3.sum(d.segmente, (z) => z.anzahl))} aller Buchungen` : "Keine Buchungen",
-      beschreibung("Anzahl Buchungen je Marktsegment, absteigend")],
-    kanal: [kanal ? `${klarname("kanal", kanal.kanal)}: ${anteil(kanal.erloes, d3.sum(d.kanaele, (z) => z.erloes))} des Gesamterlöses` : "Keine Buchungen",
-      beschreibung("Gesamterlös in EUR je Vertriebskanal (Tagesrate × Nächte, auch stornierte Buchungen), absteigend")],
+    segment: [top ? `${klarname("segment", top.segment)}: ${anteil(top.anzahl, d3.sum(d.segmente, (z) => z.anzahl))} der Buchungen, ${anteil(top.erloes, d3.sum(d.segmente, (z) => z.erloes))} des Erlöses${abweicher(d.segmente, "segment")}` : "Keine Buchungen",
+      beschreibung("Je Marktsegment der Anteil an den Buchungen neben dem Anteil am Erlös (Tagesrate × Nächte, auch stornierte Buchungen), gleiche Skala, absolute Werte in Klammern")],
+    kanal: [kanal ? `${klarname("kanal", kanal.kanal)}: ${anteil(kanal.erloes, d3.sum(d.kanaele, (z) => z.erloes))} des Erlöses bei ${anteil(kanal.anzahl, d3.sum(d.kanaele, (z) => z.anzahl))} der Buchungen${abweicher(d.kanaele, "kanal")}` : "Keine Buchungen",
+      beschreibung("Je Vertriebskanal der Anteil an den Buchungen neben dem Anteil am Erlös, gleiche Skala, absolute Werte in Klammern")],
     pivot: [d.pivotTop ? `${klarname("kundentyp", d.pivotTop.kundentyp)} sind der häufigste Kundentyp – ${anteil(d.pivotTop.anzahl, d3.sum(d.pivot, (z) => z.anzahl))} der Buchungen` : "Keine Buchungen",
       beschreibung("Anzahl Buchungen je Marktsegment (Zeilen) und Kundentyp (Spalten), Balken relativ zum Spaltenmaximum")],
     storno: [vl.length > 1 ? `Stornorisiko steigt mit der Vorlaufzeit: ${prozent(vl[0].stornoquote)} bei ${klarname("vorlaufzeit", vl[0].vorlaufzeit)}n, ${prozent(vl.at(-1).stornoquote)} bei ${klarname("vorlaufzeit", vl.at(-1).vorlaufzeit)}n${nonRefund ? ` – nicht erstattbare Buchungen ${prozent(nonRefund.stornoquote)}` : ""}` : "Keine Stornodaten",
@@ -150,7 +159,7 @@ function deutungen(d) {
   ];
 
   T.segment = !top ? ["Keine Daten.", "–"] : [
-    `${klarname("segment", top.segment)}: ${anteil(top.anzahl, segGesamt)} der Buchungen. ${wenn(direct, () => `Direktbuchungen: ${anteil(direct.anzahl, segGesamt)}. `)}`
+    `${klarname("segment", top.segment)}: ${anteil(top.anzahl, segGesamt)} der Buchungen. Liegt der Erlösanteil eines Segments über seinem Buchungsanteil, zahlt es überdurchschnittliche Tagesraten oder bleibt länger. ${wenn(direct, () => `Direktbuchungen: ${anteil(direct.anzahl, segGesamt)}. `)}`
     + `${wenn(groups, () => `Gruppen (${anteil(groups.anzahl, segGesamt)}) sind zahlenmäßig klein, aber mit ${prozent(groups.stornoquote)} Stornoquote das riskanteste Segment.`)}`,
     `Abhängigkeit von Online-Reisebüros verringern: Direktbuchungen mit Vorteilen fördern, die es nur über die eigene Seite gibt. ${wenn(groups, "Gruppen nur mit gestaffelten Anzahlungen annehmen.")}`,
   ];

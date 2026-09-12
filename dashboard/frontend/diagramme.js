@@ -70,6 +70,7 @@ function signalFarbe(anteil, hoeherBesser) {
 // beiKlick, referenz (gestrichelte Linie mit Text "insgesamt"), domain, sortieren, tipp(d) -> Text.
 function balken(element, daten, o) {
   const zeilen = o.sortieren === false ? [...daten] : [...daten].sort((a, b) => b[o.wert] - a[o.wert]);
+  const breite = Math.min(breiteVon(element), o.maxBreite || 960);
   const maximum = o.domain ? o.domain[1] : Math.max(...zeilen.map((d) => d[o.wert])) * 1.12;
   const name = (d) => (o.klarname ? o.klarname(d[o.kategorie]) : String(d[o.kategorie]));
   const marks = [
@@ -87,12 +88,41 @@ function balken(element, daten, o) {
   }
   if (o.tipp) marks.push(Plot.tip(zeilen, Plot.pointerY({ x: o.wert, y: o.kategorie, title: o.tipp })));
   return Plot.plot({
-    width: breiteVon(element), height: 32 * zeilen.length + (o.referenz != null ? 36 : 14),
+    width: breite, height: 32 * zeilen.length + (o.referenz != null ? 36 : 14),
     marginLeft: BESCHRIFTUNG(), marginRight: WERTSPALTE(), marginTop: o.referenz != null ? 26 : 4, marginBottom: 10,
     x: { axis: null, domain: [0, maximum] },
     y: { label: null, tickSize: 0, tickPadding: 10, domain: zeilen.map((d) => d[o.kategorie]), tickFormat: (k) => kurzerName(o.klarname ? o.klarname(k) : String(k)) },
     style: { fontSize: "13px", color: FARBE.tinte },
     marks,
+  });
+}
+
+// Zwei Anteile je Kategorie nebeneinander (z. B. Anteil an den Buchungen und Anteil am
+// Umsatz), gleiche Zeilen, gleiche Prozentskala, absolute Werte in Klammern.
+// daten: [{kategorie, anteil1, absolut1, anteil2, absolut2, ...}]; Optionen: kategorie, titel1, titel2,
+// format1, format2 (für die absoluten Werte), klarname, aktiv, beiKlick, tipp.
+function balkenPaar(element, daten, o) {
+  const zeilen = [...daten].sort((a, b) => b.anteil1 - a.anteil1);
+  const lang = zeilen.flatMap((z) => [
+    { ...z, mass: o.titel1, anteil: z.anteil1, absolut: o.format1(z.absolut1) },
+    { ...z, mass: o.titel2, anteil: z.anteil2, absolut: o.format2(z.absolut2) },
+  ]);
+  const maximum = d3.max(lang, (d) => d.anteil) || 1;
+  const name = (k) => (o.klarname ? o.klarname(k) : String(k));
+  return Plot.plot({
+    width: breiteVon(element), height: 32 * zeilen.length + 44,
+    marginLeft: BESCHRIFTUNG(), marginRight: 16, marginTop: 30, marginBottom: 10,
+    facet: { data: lang, x: "mass", label: null },
+    fx: { domain: [o.titel1, o.titel2], padding: 0.12, tickSize: 0, axis: "top", tickPadding: 8 },
+    x: { axis: null, domain: [0, maximum * 1.55] },
+    y: { label: null, tickSize: 0, tickPadding: 10, domain: zeilen.map((z) => z[o.kategorie]), tickFormat: (k) => kurzerName(name(k)) },
+    style: { fontSize: "13px", color: FARBE.tinte },
+    marks: [
+      Plot.ruleY(lang, { y: o.kategorie, x1: 0, x2: maximum * 1.55, stroke: FARBE.fuehrung, strokeDasharray: "1,3" }),
+      Plot.barX(lang, { x: "anteil", y: o.kategorie, fill: (d) => (o.aktiv != null && d[o.kategorie] === o.aktiv ? FARBE.akzent : FARBE.balken), title: o.tipp, render: klickbar(lang, o.beiKlick) }),
+      Plot.text(lang, { x: "anteil", y: o.kategorie, text: (d) => prozent0(d.anteil) + "  (" + d.absolut + ")", dx: 6, textAnchor: "start", fill: FARBE.grau, fontSize: 12.5 }),
+      Plot.tip(lang, Plot.pointerY({ x: "anteil", y: o.kategorie, title: o.tipp })),
+    ],
   });
 }
 
@@ -135,8 +165,8 @@ function saeulen(element, daten, o) {
   const maximum = d3.greatest(daten, (d) => d.wert);
   const beschriftet = daten.filter((d) => d === maximum || d.bezug);
   return Plot.plot({
-    width: breite, height: o.hoehe || 230, marginLeft: links, marginRight: rechts, marginTop: 22, marginBottom: 30,
-    x: zeitachse(bereich),
+    width: breite, height: o.hoehe || 230, marginLeft: links, marginRight: rechts, marginTop: 28, marginBottom: 30,
+    x: { ...zeitachse(bereich), insetLeft: 14, insetRight: 6 },
     y: { label: null, grid: true, tickFormat: (d) => o.format(d), nice: true, zero: true, ticks: 4, tickSize: 0 },
     style: { fontSize: "12px", color: FARBE.grau },
     marks: [
@@ -161,8 +191,8 @@ function gestapelteSaeulen(element, daten, o) {
   const inset = saeulenabstand(breite, daten.length, links + rechts);
   const maximum = d3.greatest(daten, (d) => d.realisiert + d.storniert);
   return Plot.plot({
-    width: breite, height: 280, marginLeft: links, marginRight: rechts, marginTop: 22, marginBottom: 30,
-    x: zeitachse(bereich),
+    width: breite, height: 280, marginLeft: links, marginRight: rechts, marginTop: 28, marginBottom: 30,
+    x: { ...zeitachse(bereich), insetLeft: 14, insetRight: 6 },
     y: { label: null, grid: true, tickFormat: (d) => kurz(d), nice: true, zero: true, ticks: 4, tickSize: 0 },
     style: { fontSize: "12px", color: FARBE.grau },
     marks: [

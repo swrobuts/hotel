@@ -51,7 +51,7 @@ header.kopf nav a:hover, header.kopf nav button:hover { text-decoration: underli
 section { margin-top: 64px; }
 section > h2 { font-size: 20px; font-weight: 650; color: var(--tinte); margin: 0 0 8px; }
 section > .lead { max-width: 900px; margin: 0 0 24px; color: var(--text); font-size: 15.5px; }
-figure { margin: 0 0 32px; background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 28px 32px 20px; }
+figure { margin: 0 0 40px; background: var(--flaeche); border: 1px solid var(--linie); border-radius: 8px; padding: 28px 32px 20px; }
 figure .aussage { font-size: 17px; font-weight: 650; line-height: 1.35; color: var(--tinte); margin: 0 0 4px; }
 figure .beschreibung { font-size: 13px; color: var(--grau); margin: 0 0 24px; }
 figure .diagramm { min-height: 80px; }
@@ -63,7 +63,7 @@ figure h4 { font-size: 13px; font-weight: 600; color: var(--grau); margin: 0 0 6
 td .definition { display: block; font-size: 11.5px; color: var(--hell); white-space: normal; max-width: 360px; }
 td .definition-inline { font-size: 11.5px; color: var(--hell); margin-left: 4px; }
 .raster-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 32px; }
-.untereinander > div + div { margin-top: 22px; }
+.untereinander > div + div { margin-top: 36px; }
 .signal { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 2px; }
 .signal.besser { background: #2f7fbf; }
 .signal.schlechter { background: #c8412b; }

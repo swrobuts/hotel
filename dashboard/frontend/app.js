@@ -425,13 +425,13 @@ function saeulenTipp(titel, format) {
 function zeitverlaufZeichnen(d) {
   const felder = [["zeit-buchungen", "Anzahl Buchungen", "anzahl_buchungen", zahl, true, false],
     ["zeit-erloes", "Gesamterlös in EUR", "gesamterloes", kurz, true, false],
-    ["zeit-storno", "Stornoquote", "stornoquote", prozent, false, true]];
+    ["zeit-storno", "Stornoquote", "stornoquote", prozent0, false, true]];
   if (d.monate.length < 2) { for (const [id] of felder) document.getElementById(id).replaceChildren(); return; }
   for (const [id, titel, feld, format, hoeherBesser] of felder) {
     const r = reihe(d.monate, feld);
     const kasten = document.getElementById(id);
     const ueberschrift = document.createElement("h4"); ueberschrift.textContent = titel;
-    kasten.replaceChildren(ueberschrift, saeulen(kasten, r, { format, hoeherBesser, hoehe: 230, klickMonat: monatSetzen, tipp: saeulenTipp(titel, format) }));
+    kasten.replaceChildren(ueberschrift, saeulen(kasten, r, { format, hoeherBesser, hoehe: 230, klickMonat: monatSetzen, tipp: saeulenTipp(titel, format === prozent0 ? prozent : format) }));
   }
 }
 
@@ -451,13 +451,18 @@ function dimensionTipp(dimension, kategorie, gesamt) {
   return (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})\nStornoquote ${prozent(z.stornoquote)}\nØ Zimmerpreis ${dezimal(z.adr)} EUR\nErlös ${kurz(z.erloes)} EUR`;
 }
 
-// Vertrieb: Marktsegmente, Vertriebskanäle, Tabelle Marktsegment × Kundentyp.
+// Vertrieb: je Marktsegment und je Vertriebskanal der Anteil an den Buchungen neben dem
+// Anteil am Umsatz (gleiche Skala), dann die Tabelle Marktsegment × Kundentyp.
 function vertriebZeichnen(d) {
-  const segGesamt = d3.sum(d.segmente, (z) => z.anzahl), kanGesamt = d3.sum(d.kanaele, (z) => z.erloes);
-  zeichnen("balken-segment", (el) => balken(el, d.segmente, { kategorie: "segment", wert: "anzahl", format: zahl, klarname: (w) => klarname("segment", w), aktiv: zustand.filter.segment,
-    beiKlick: (z) => filterSetzen("segment", z.segment), zusatz: (z) => "  (" + prozent(z.anzahl / segGesamt) + ")", tipp: dimensionTipp("segment", "segment", segGesamt) }));
-  zeichnen("balken-kanal", (el) => balken(el, d.kanaele, { kategorie: "kanal", wert: "erloes", format: kurz, klarname: (w) => klarname("kanal", w), aktiv: zustand.filter.kanal,
-    beiKlick: (z) => filterSetzen("kanal", z.kanal), zusatz: (z) => "  (" + prozent(z.erloes / kanGesamt) + ")", tipp: dimensionTipp("kanal", "kanal", d3.sum(d.kanaele, (z) => z.anzahl)) }));
+  const paar = (id, daten, kategorie, dimension) => {
+    const gesamtAnzahl = d3.sum(daten, (z) => z.anzahl), gesamtErloes = d3.sum(daten, (z) => z.erloes);
+    const zeilen = daten.map((z) => ({ ...z, anteil1: z.anzahl / gesamtAnzahl, absolut1: z.anzahl, anteil2: z.erloes / gesamtErloes, absolut2: z.erloes }));
+    const tipp = (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anteil1)})\n${kurz(z.erloes)} EUR Erlös (${prozent(z.anteil2)})\nØ Zimmerpreis ${dezimal(z.adr)} EUR · Stornoquote ${prozent(z.stornoquote)}`;
+    zeichnen(id, (el) => balkenPaar(el, zeilen, { kategorie, titel1: "Anteil an den Buchungen", titel2: "Anteil am Erlös", format1: zahl, format2: kurz,
+      klarname: (w) => klarname(dimension, w), aktiv: zustand.filter[dimension], beiKlick: (z) => filterSetzen(dimension, z[kategorie]), tipp }));
+  };
+  paar("balken-segment", d.segmente, "segment", "segment");
+  paar("balken-kanal", d.kanaele, "kanal", "kanal");
   pivotZeichnen(d);
 }
 
@@ -489,7 +494,7 @@ function stornoZeichnen(d) {
   const referenz = d.kennzahlen.stornoquote;
   const tipp = (dimension, kategorie) => (z) => `${klarname(dimension, z[kategorie])}\nStornoquote ${prozent(z.stornoquote)} (${zahl(z.stornierungen)} von ${zahl(z.anzahl)} Buchungen)\n`
     + `${dezimal1(Math.abs(z.stornoquote - referenz) * 100)} Prozentpunkte ${z.stornoquote >= referenz ? "über" : "unter"} der Quote insgesamt`;
-  const gemeinsam = { wert: "stornoquote", format: prozent, farbe: FARBE.storno, domain: [0, 1.15], referenz };
+  const gemeinsam = { wert: "stornoquote", format: prozent0, farbe: FARBE.storno, domain: [0, 1.15], referenz };
   zeichnen("storno-hotel", (el) => balken(el, d.hotels, { ...gemeinsam, kategorie: "hotel", klarname: (w) => klarname("hotel", w), aktiv: zustand.filter.hotel, beiKlick: (z) => filterSetzen("hotel", z.hotel), tipp: tipp("hotel", "hotel") }));
   zeichnen("storno-kaution", (el) => balken(el, d.kautionen, { ...gemeinsam, kategorie: "kaution", klarname: (w) => klarname("kaution", w), aktiv: zustand.filter.kaution, beiKlick: (z) => filterSetzen("kaution", z.kaution), tipp: tipp("kaution", "kaution") }));
   zeichnen("storno-segment", (el) => balken(el, d.segmente, { ...gemeinsam, kategorie: "segment", klarname: (w) => klarname("segment", w), aktiv: zustand.filter.segment, beiKlick: (z) => filterSetzen("segment", z.segment), tipp: tipp("segment", "segment") }));
