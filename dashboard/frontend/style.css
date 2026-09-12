@@ -1,0 +1,112 @@
+/* Hotel Booking Demand – Dashboard. Ruhige Typografie, wenig Linien, eine Akzentfarbe. */
+
+:root {
+  --tinte: #1b1b1b;
+  --text: #333333;
+  --grau: #6b6b6b;
+  --linie: #e2e2e2;
+  --flaeche: #ffffff;
+  --grund: #f7f7f5;
+  --akzent: #20808d;
+  --storno: #a84b2f;
+  --schrift: -apple-system, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--grund);
+  color: var(--text);
+  font-family: var(--schrift);
+  font-size: 14px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+body.laedt main { opacity: 0.55; transition: opacity 0.2s; }
+
+main { max-width: 1240px; margin: 0 auto; padding: 0 24px 48px; }
+
+header.kopf { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; padding: 28px 0 8px; }
+header.kopf h1 { font-size: 22px; font-weight: 600; margin: 0; color: var(--tinte); letter-spacing: -0.01em; }
+header.kopf p { margin: 0; color: var(--grau); }
+header.kopf nav a, header.kopf nav button { margin-left: 16px; color: var(--akzent); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: none; }
+header.kopf nav a:hover, header.kopf nav button:hover { text-decoration: underline; }
+
+/* Filterleiste: bleibt beim Rollen oben */
+#filterleiste {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--grund); border-bottom: 1px solid var(--linie);
+  padding: 10px 0 8px; margin-bottom: 20px;
+}
+#filterleiste .felder { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; }
+#filterleiste label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--grau); text-transform: uppercase; letter-spacing: 0.04em; }
+#filterleiste select, #filterleiste input { font: inherit; font-size: 13px; color: var(--tinte); padding: 4px 6px; border: 1px solid var(--linie); border-radius: 4px; background: var(--flaeche); min-width: 120px; }
+#filterleiste input[type="month"] { min-width: 140px; }
+#filterleiste .hinweis { color: var(--grau); font-size: 12px; margin: 8px 0 0; }
+#chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.chip { font: inherit; font-size: 12px; display: inline-flex; gap: 8px; align-items: center; padding: 3px 9px; border: 1px solid var(--akzent); color: var(--akzent); background: var(--flaeche); border-radius: 999px; cursor: pointer; }
+.chip:hover { background: var(--akzent); color: #fff; }
+#zuruecksetzen { font: inherit; font-size: 12px; padding: 3px 9px; border: 1px solid var(--linie); border-radius: 999px; background: var(--flaeche); color: var(--grau); cursor: pointer; }
+#zuruecksetzen:hover { color: var(--tinte); border-color: var(--grau); }
+
+#fehler { background: #fbe9e4; color: var(--storno); padding: 10px 14px; border-radius: 4px; margin-bottom: 16px; }
+
+/* Kennzahlkacheln */
+#kacheln { display: grid; grid-template-columns: repeat(auto-fill, minmax(212px, 1fr)); gap: 12px; margin-bottom: 28px; }
+.kachel { background: var(--flaeche); border: 1px solid var(--linie); border-radius: 6px; padding: 12px 14px 10px; }
+.kachel-titel { font-size: 12px; color: var(--grau); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kachel-zeile { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; margin: 2px 0; }
+.kachel-wert { font-size: 24px; font-weight: 600; color: var(--tinte); line-height: 1.2; white-space: nowrap; }
+.kachel-linie svg { display: block; }
+.kachel-vergleich { font-size: 11px; color: var(--grau); }
+
+/* Abschnitte und Diagrammkästen */
+section { margin-bottom: 28px; }
+section > h2 { font-size: 15px; font-weight: 600; color: var(--tinte); margin: 0 0 12px; padding-top: 8px; border-top: 1px solid var(--linie); }
+.raster { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.raster .breit { grid-column: 1 / -1; }
+figure { margin: 0; background: var(--flaeche); border: 1px solid var(--linie); border-radius: 6px; padding: 14px 16px 10px; min-width: 0; }
+figure h3 { font-size: 14px; font-weight: 600; color: var(--tinte); margin: 0 0 8px; line-height: 1.35; }
+figure .diagramm { min-height: 120px; overflow-x: auto; }
+figure .diagramm svg { display: block; max-width: 100%; height: auto; font-family: var(--schrift); }
+figure figcaption { font-size: 12px; color: var(--grau); margin-top: 6px; }
+details.sql { margin-top: 6px; font-size: 12px; }
+details.sql summary { color: var(--grau); cursor: pointer; }
+details.sql pre { background: var(--grund); border: 1px solid var(--linie); border-radius: 4px; padding: 10px 12px; overflow-x: auto; font-size: 11.5px; line-height: 1.4; white-space: pre; color: var(--tinte); }
+
+/* Karte: Legende */
+.legende { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--grau); margin-top: 4px; }
+.legende .verlauf { width: 120px; height: 8px; background: linear-gradient(to right, #e9eef0, #20808d); border-radius: 2px; }
+
+/* Tabelle */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { padding: 5px 8px; border-bottom: 1px solid var(--linie); text-align: left; white-space: nowrap; }
+th { font-weight: 600; color: var(--grau); font-size: 12px; cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--flaeche); }
+th.sortiert { color: var(--tinte); }
+th.zahl, td.zahl { text-align: right; }
+td.zahl { position: relative; }
+.datenbalken { position: absolute; left: 4px; top: 6px; bottom: 6px; background: #e4ecee; max-width: calc(100% - 8px); }
+td .wert { position: relative; }
+td { position: relative; }
+th, td { padding: 4px 7px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: #f3f6f7; }
+tbody tr.aktiv td { background: #e4f0f1; color: var(--tinte); }
+.tabellenkasten { max-height: 420px; overflow: auto; border: 1px solid var(--linie); border-radius: 4px; }
+.tabellenleiste { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 8px 0; font-size: 12px; color: var(--grau); }
+.tabellenleiste button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid var(--linie); border-radius: 4px; background: var(--flaeche); cursor: pointer; color: var(--tinte); }
+
+footer { color: var(--grau); font-size: 12px; border-top: 1px solid var(--linie); padding-top: 12px; }
+footer a { color: var(--akzent); }
+
+@media (max-width: 860px) {
+  .raster { grid-template-columns: 1fr; }
+  main { padding: 0 12px 32px; }
+}
+
+/* Auf schmalen Bildschirmen bleibt die Filterleiste nicht kleben, sie wäre zu hoch */
+@media (max-width: 860px) {
+  #filterleiste { position: static; }
+}

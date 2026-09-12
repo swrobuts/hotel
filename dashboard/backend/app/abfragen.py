@@ -19,13 +19,19 @@ STERN = """FROM hotel_bi.fact_bookings f
   JOIN hotel_bi.dim_deposit_type dt ON dt.deposit_type_id = f.deposit_type_id
   JOIN hotel_bi.dim_country c ON c.country_id = f.country_id"""
 
-# Dieselben Kennzahlen je Gruppe, wie im Katalog definiert.
+# Dieselben Kennzahlen je Gruppe, wie im Katalog definiert. Neben den Quoten
+# stehen die Summen, aus denen das Frontend Gruppen korrekt zusammenfassen kann.
 KENNZAHLEN = """COUNT(*)                                             AS anzahl,
+  SUM(f.is_canceled::int)                              AS stornierungen,
   AVG(f.is_canceled::int)                              AS stornoquote,
   AVG(f.adr)                                           AS adr,
+  SUM(f.adr)                                           AS adr_summe,
   SUM(f.revenue)                                       AS erloes,
   SUM(f.revenue) FILTER (WHERE NOT f.is_canceled)      AS erloes_nicht_storniert,
-  SUM(f.total_nights)                                  AS naechte"""
+  SUM(f.total_nights)                                  AS naechte,
+  SUM(f.lead_time)                                     AS vorlaufzeit_summe,
+  SUM(f.is_repeated_guest::int)                        AS wiederholungsgaeste,
+  SUM((f.total_of_special_requests > 0)::int)          AS sonderwuensche"""
 
 
 def ausfuehren(sql: str, parameter: dict) -> dict:
@@ -54,14 +60,14 @@ def kennzahlen(filter: Filter) -> dict:
 
 
 def monate(filter: Filter) -> dict:
-    """Kennzahlen je Anreisemonat — Grundlage für Zeitreihen und Sparklines."""
+    """Kennzahlen je Anreisemonat und Hotel — Grundlage für Zeitreihen und Sparklines."""
     where, parameter = where_klausel(filter)
-    sql = f"""SELECT d.year AS jahr, d.month AS monat,
+    sql = f"""SELECT d.year AS jahr, d.month AS monat, h.hotel AS hotel,
   {KENNZAHLEN}
 {STERN}
 {where}
-GROUP BY d.year, d.month
-ORDER BY d.year, d.month"""
+GROUP BY d.year, d.month, h.hotel
+ORDER BY d.year, d.month, h.hotel"""
     return ausfuehren(sql, parameter)
 
 

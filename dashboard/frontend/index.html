@@ -1,1 +1,111 @@
-<html><body>Platzhalter</body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hotel Booking Demand – Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header class="kopf">
+    <div>
+      <h1>Hotel Booking Demand</h1>
+      <p>119.390 Buchungen eines Stadt- und eines Resorthotels in Portugal, Anreisen Juli 2015 bis August 2017 · live aus der Datenbank <code>hotel</code></p>
+    </div>
+    <nav>
+      <button id="link" type="button">Link kopieren</button>
+      <a href="https://github.com/swrobuts/hotel" target="_blank" rel="noopener">Repo</a>
+    </nav>
+  </header>
+
+  <div id="filterleiste">
+    <div class="felder">
+      <label>Hotel<select name="hotel"><option value="">alle</option></select></label>
+      <label>Anreisejahr<select name="jahr"><option value="">alle</option></select></label>
+      <label>Zeitraum ab<input type="month" name="von" min="2015-07" max="2017-08"></label>
+      <label>bis<input type="month" name="bis" min="2015-07" max="2017-08"></label>
+      <label>Marktsegment<select name="segment"><option value="">alle</option></select></label>
+      <label>Vertriebskanal<select name="kanal"><option value="">alle</option></select></label>
+      <label>Kundentyp<select name="kundentyp"><option value="">alle</option></select></label>
+      <label>Kautionstyp<select name="kaution"><option value="">alle</option></select></label>
+      <label>Land<select name="land"><option value="">alle</option></select></label>
+      <label>Vorlaufzeit<select name="vorlaufzeit"><option value="">alle</option></select></label>
+    </div>
+    <div id="chips"></div>
+    <p class="hinweis">Jeder Klick auf einen Balken, einen Monat oder ein Land setzt den Filter für alle Diagramme; ein zweiter Klick hebt ihn auf. <button id="zuruecksetzen" type="button" hidden>Alle Filter zurücksetzen</button></p>
+  </div>
+
+  <div id="fehler" hidden></div>
+
+  <div id="kacheln"></div>
+
+  <section id="uebersicht">
+    <h2>Übersicht</h2>
+    <div class="raster">
+      <figure><h3>Buchungen je Anreisemonat</h3><div id="linie-buchungen" class="diagramm"></div>
+        <details class="sql" data-route="monate"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure><h3>Gesamterlös je Anreisemonat</h3><div id="linie-erloes" class="diagramm"></div>
+        <figcaption>Erlös = Tagesrate × Nächte je Buchung, auch stornierte Buchungen.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="vertrieb">
+    <h2>Vertrieb und Kundensegmente</h2>
+    <div class="raster">
+      <figure><h3>Anzahl Buchungen nach Marktsegment</h3><div id="balken-segment" class="diagramm"></div>
+        <details class="sql" data-route="segmente"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure><h3>Gesamterlös nach Vertriebskanal</h3><div id="balken-kanal" class="diagramm"></div>
+        <details class="sql" data-route="kanaele"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure class="breit"><h3>Anzahl Buchungen nach Marktsegment, je Kundentyp ein Feld</h3><div id="multiples-segment-kundentyp" class="diagramm"></div>
+        <details class="sql" data-route="segment_kundentyp"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+    </div>
+  </section>
+
+  <section id="storno">
+    <h2>Stornoanalyse</h2>
+    <div class="raster">
+      <figure><h3>Stornoquote nach Hotel</h3><div id="balken-storno-hotel" class="diagramm"></div>
+        <details class="sql" data-route="hotels"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure><h3>Stornoquote nach Kautionstyp</h3><div id="balken-storno-kaution" class="diagramm"></div>
+        <details class="sql" data-route="kautionen"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure><h3>Stornoquote nach Marktsegment</h3><div id="balken-storno-segment" class="diagramm"></div></figure>
+      <figure><h3>Stornoquote nach Vorlaufzeit (Tage)</h3><div id="balken-storno-vorlaufzeit" class="diagramm"></div>
+        <details class="sql" data-route="vorlaufzeit"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure class="breit"><h3>Erlös je Monat nach Anreise- und nach Stornodatum</h3><div id="linie-erloes-datum" class="diagramm"></div>
+        <figcaption>Dieselbe Kennzahl über zwei Verknüpfungen mit der Datumstabelle: Anreisedatum (aktive Beziehung in Power BI) und Datum des Reservierungsstatus (inaktive Beziehung, USERELATIONSHIP). Zeitfilter gelten je Reihe für das jeweilige Datum.</figcaption>
+        <details class="sql" data-route="erloes_datum"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+    </div>
+  </section>
+
+  <section id="saison">
+    <h2>Saisonalität und Herkunftsländer</h2>
+    <div class="raster">
+      <figure class="breit"><h3>Buchungen je Anreisemonat und Jahr</h3><div id="linie-monat-jahr" class="diagramm"></div>
+        <figcaption>2015 beginnt im Juli, 2017 endet im August.</figcaption></figure>
+      <figure class="breit"><h3>Herkunftsländer der Gäste</h3><div id="karte" class="diagramm"></div>
+        <div class="legende"><span>wenige</span><span class="verlauf"></span><span>viele Buchungen</span><span>· hell: keine Buchungen · ausgewähltes Land rotbraun</span></div>
+        <figcaption>ISO-3-Codes des Datensatzes; „CN" wird als China gezeigt, Kleinstaaten haben bei 1:110 Mio. keine Fläche und stehen nur in der Tabelle.</figcaption>
+        <details class="sql" data-route="laender"><summary>SQL anzeigen</summary><pre></pre></details></figure>
+      <figure><h3>Top-10-Herkunftsländer nach Anzahl Buchungen</h3><div id="balken-laender" class="diagramm"></div></figure>
+      <figure><h3>Alle Herkunftsländer</h3>
+        <div class="tabellenleiste"><span id="tabelle-hinweis"></span><button id="csv" type="button">CSV herunterladen</button></div>
+        <div class="tabellenkasten"><table id="tabelle-laender"></table></div></figure>
+    </div>
+  </section>
+
+  <footer>
+    Datenquelle: Antonio, de Almeida &amp; Nunes (2019), <em>Hotel booking demand datasets</em>, Data in Brief 22 (CC BY 4.0). Kennzahlen wie im Notebook und in der Power-BI-Referenzlösung des Repos.
+    Gestaltung nach Tufte, Few und Hichert: eine Farbe je Bedeutung, Werte am Balken, Aussage im Titel.
+  </footer>
+</main>
+
+<!-- Bibliotheken mit fester Version, damit alle dasselbe Verhalten sehen -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@observablehq/plot@0.6.17/dist/plot.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="format.js"></script>
+<script src="diagramme.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
