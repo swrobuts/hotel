@@ -25,10 +25,14 @@ function abweicher(zeilen, dimension) {
 // Leitsätze der Abschnitte
 // ---------------------------------------------------------------------------
 
+// Sagt, auf welchen Monat sich die gesättigte Säule und die Abweichungen der Kacheln beziehen.
 function leadUeberblick(d) {
-  const k = d.kennzahlen;
+  const k = d.kennzahlen, b = d.bezug;
   if (!k.anzahl_buchungen) return "Keine Buchungen für diese Filterkombination.";
-  return `${kurz(k.erloes_nicht_storniert)} EUR stornobereinigter Umsatz aus ${zahl(k.anzahl_buchungen)} Buchungen, ${prozent(k.stornoquote)} storniert.`;
+  if (!b) return "";
+  return b === d.monate.at(-1)
+    ? `Die letzte Säule der Zeitreihe zeigt die Werte von ${monatLang(b)}.`
+    : `Die dunkle Säule der Zeitreihe zeigt die Werte von ${monatLang(b)}, dem letzten Monat im Zeitfilter.`;
 }
 
 function leadZeit(d) {
