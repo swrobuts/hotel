@@ -41,10 +41,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Gesamterlös"
+                  "Property": "Gebuchter Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Gesamterlös"
+              "queryRef": "FACT_BOOKINGS.Gebuchter Umsatz"
             },
             {
               "field": {
@@ -54,10 +54,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Erlös nach Stornodatum"
+                  "Property": "Gebuchter Umsatz nach Stornodatum"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Erlös nach Stornodatum"
+              "queryRef": "FACT_BOOKINGS.Gebuchter Umsatz nach Stornodatum"
             }
           ]
         }
@@ -77,7 +77,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Erlös je Monat nach Anreisedatum und nach Stornodatum'"
+                  "Value": "'Gebuchter Umsatz je Monat nach Anreisedatum und nach Stornodatum'"
                 }
               }
             },

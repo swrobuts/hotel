@@ -41,10 +41,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Gesamterlös"
+                  "Property": "Gebuchter Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Gesamterlös"
+              "queryRef": "FACT_BOOKINGS.Gebuchter Umsatz"
             }
           ]
         }
@@ -59,7 +59,7 @@
                     "Entity": "FACT_BOOKINGS"
                   }
                 },
-                "Property": "Gesamterlös"
+                "Property": "Gebuchter Umsatz"
               }
             },
             "direction": "Descending"
@@ -82,7 +82,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Gesamterlös nach Vertriebskanal'"
+                  "Value": "'Gebuchter Umsatz nach Vertriebskanal'"
                 }
               }
             },

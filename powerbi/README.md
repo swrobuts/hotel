@@ -7,6 +7,11 @@ Grundgerüst selbst auf und vergleichen ihr Ergebnis mit dieser Lösung.
 
 Geprüft mit Power BI Desktop 2.152 (März 2026).
 
+> **Stand 12.09.2026, abends:** Die Measures im Projekt (`Hotel.pbip`) sind auf
+> die Begriffe Umsatz / Gebuchter Umsatz / Durch Stornierung entgangener Umsatz
+> umbenannt. `Hotel.pbix` trägt noch die alten Namen (Gesamterlös, Erlös …), bis
+> sie in Power BI Desktop neu gespeichert wird.
+
 ## Öffnen
 
 **`Hotel.pbix`** — Doppelklick. Die Datei enthält die Daten (Stand 12.09.2026),
@@ -52,9 +57,13 @@ Datumstabellen sind abgeschaltet. `month_name` ist nach `month` sortiert.
 
 **Measures** (in `FACT_BOOKINGS`, Formeln wortgleich aus dem Katalog):
 Anzahl Buchungen · Stornoquote % · Ø Vorlaufzeit · Ø Aufenthaltsdauer ·
-Gebuchte Zimmernächte · Ø ADR · Gesamterlös · Erlös stornierte Buchungen ·
-Erlös nicht stornierte Buchungen · Wiederholungsgast-Anteil % · Anteil mit
-Sonderwünschen % · Erlös nach Stornodatum · Ø Erlös je Buchung.
+Gebuchte Zimmernächte · Ø ADR · Gebuchter Umsatz · Umsatz · Durch Stornierung
+entgangener Umsatz · Wiederholungsgast-Anteil % · Anteil mit Sonderwünschen % ·
+Gebuchter Umsatz nach Stornodatum · Ø gebuchter Umsatz je Buchung.
+
+**Begriffe:** Umsatz = Zimmerpreis (ADR) × Nächte je Buchung, nur Übernachtung,
+für nicht stornierte Buchungen; gebuchter Umsatz = alle Buchungen vor
+Stornierung; durch Stornierung entgangener Umsatz = Differenz.
 
 **Berechnete Spalten:** `FACT_BOOKINGS[Lead-Time-Bucket]` (0-7, 8-30, 31-90,
 90+ Tage) mit verborgener Sortierspalte; `DIM_DATE[Monat]` (erster Tag des
@@ -69,27 +78,27 @@ ausgeblendet; in der Modellansicht sind sie sichtbar.
 
 ## Seiten
 
-**1 Management-Übersicht** — Karten Anzahl Buchungen, Gesamterlös,
+**1 Management-Übersicht** — Karten Anzahl Buchungen, Gebuchter Umsatz,
 Stornoquote %, Ø ADR; zwei Liniendiagramme je Anreisemonat; Slicer Hotel und
 Anreisejahr (2015–2017).
 
 ![Seite 1](bilder/seite1.png)
 
-**2 Vertrieb & Kundensegmente** — Buchungen nach Marktsegment, Gesamterlös
+**2 Vertrieb & Kundensegmente** — Buchungen nach Marktsegment, gebuchter Umsatz
 nach Vertriebskanal, gestapelt Marktsegment × Kundentyp.
 
 ![Seite 2](bilder/seite2.png)
 
 **3 Stornoanalyse** — Stornoquote nach Hotel, Marktsegment, Kautionstyp und
-Vorlaufzeit; Karten Erlös storniert / nicht storniert; Liniendiagramm *Erlös je
-Monat nach Anreisedatum und nach Stornodatum* — dasselbe Maß über die aktive
+Vorlaufzeit; Karten Umsatz / durch Stornierung entgangener Umsatz; Liniendiagramm
+*Gebuchter Umsatz je Monat nach Anreisedatum und nach Stornodatum* — dasselbe Maß über die aktive
 und über die inaktive Beziehung.
 
 ![Seite 3](bilder/seite3.png)
 
 **4 Saisonalität & Herkunftsländer** — Buchungen je Anreisemonat und Jahr,
 Treemap der Herkunftsländer, Top-10-Länder (Top-N-Filter auf dem Visual),
-Tabelle mit Buchungen, Zimmernächten, Erlös und Stornoquote je Land.
+Tabelle mit Buchungen, Zimmernächten, gebuchtem Umsatz und Stornoquote je Land.
 
 ![Seite 4](bilder/seite4.png)
 
@@ -103,6 +112,6 @@ Standort ersetzen (die Spalte ist als Datenkategorie *Land* markiert).
 ## Kontrollwerte
 
 Ohne Filter müssen die Karten zeigen: Anzahl Buchungen 119.390, Stornoquote
-37,0 %, Ø ADR 101,83, Gesamterlös 42.723.498, Erlös nicht stornierte Buchungen
-25.996.260, Erlös stornierte Buchungen 16.727.237. Dieselben Werte liefert das
+37,0 %, Ø ADR 101,83, Gebuchter Umsatz 42.723.498, Umsatz 25.996.260, Durch
+Stornierung entgangener Umsatz 16.727.237. Dieselben Werte liefert das
 Notebook in Abschnitt 4.

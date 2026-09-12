@@ -23,10 +23,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Erlös stornierte Buchungen"
+                  "Property": "Durch Stornierung entgangener Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Erlös stornierte Buchungen"
+              "queryRef": "FACT_BOOKINGS.Durch Stornierung entgangener Umsatz"
             }
           ]
         }

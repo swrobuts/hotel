@@ -28,15 +28,15 @@ table FACT_BOOKINGS
 		formatString: #,0.00
 		lineageTag: fd00c9b3-8c8b-5988-bd1b-78d9d04cb6ea
 
-	measure Gesamterlös = SUM(FACT_BOOKINGS[revenue])
+	measure 'Gebuchter Umsatz' = SUM(FACT_BOOKINGS[revenue])
 		formatString: #,0
 		lineageTag: ca97abb8-75ed-545c-b36f-468eb4174612
 
-	measure 'Erlös stornierte Buchungen' = CALCULATE(SUM(FACT_BOOKINGS[revenue]), FACT_BOOKINGS[is_canceled] = 1)
+	measure 'Durch Stornierung entgangener Umsatz' = CALCULATE(SUM(FACT_BOOKINGS[revenue]), FACT_BOOKINGS[is_canceled] = 1)
 		formatString: #,0
 		lineageTag: 8648bcd0-6e9f-56e1-89b4-580f780f35d5
 
-	measure 'Erlös nicht stornierte Buchungen' = CALCULATE(SUM(FACT_BOOKINGS[revenue]), FACT_BOOKINGS[is_canceled] = 0)
+	measure Umsatz = CALCULATE(SUM(FACT_BOOKINGS[revenue]), FACT_BOOKINGS[is_canceled] = 0)
 		formatString: #,0
 		lineageTag: 3ae15481-f575-5bdf-8faf-a0e2a4754bb9
 
@@ -54,14 +54,14 @@ table FACT_BOOKINGS
 		formatString: 0.0 %
 		lineageTag: 052e1f92-86c0-5662-9f92-ca2e3f649b25
 
-	measure 'Erlös nach Stornodatum' =
+	measure 'Gebuchter Umsatz nach Stornodatum' =
 			CALCULATE(
 			    SUM(FACT_BOOKINGS[revenue]),
 			    USERELATIONSHIP(FACT_BOOKINGS[reservation_status_date_key], DIM_DATE[date_key]))
 		formatString: #,0
 		lineageTag: de480ac9-d416-512a-9959-65295e2740f5
 
-	measure 'Ø Erlös je Buchung' = DIVIDE([Gesamterlös], [Anzahl Buchungen])
+	measure 'Ø gebuchter Umsatz je Buchung' = DIVIDE([Gebuchter Umsatz], [Anzahl Buchungen])
 		formatString: #,0.00
 		lineageTag: d1e8be93-7dde-5d84-86e2-28988eed1543
 

@@ -23,10 +23,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Erlös nicht stornierte Buchungen"
+                  "Property": "Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Erlös nicht stornierte Buchungen"
+              "queryRef": "FACT_BOOKINGS.Umsatz"
             }
           ]
         }

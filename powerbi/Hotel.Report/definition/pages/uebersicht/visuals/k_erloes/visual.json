@@ -23,10 +23,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Gesamterlös"
+                  "Property": "Gebuchter Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Gesamterlös"
+              "queryRef": "FACT_BOOKINGS.Gebuchter Umsatz"
             }
           ]
         }

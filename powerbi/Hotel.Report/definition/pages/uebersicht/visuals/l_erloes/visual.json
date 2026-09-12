@@ -41,10 +41,10 @@
                       "Entity": "FACT_BOOKINGS"
                     }
                   },
-                  "Property": "Gesamterlös"
+                  "Property": "Gebuchter Umsatz"
                 }
               },
-              "queryRef": "FACT_BOOKINGS.Gesamterlös"
+              "queryRef": "FACT_BOOKINGS.Gebuchter Umsatz"
             }
           ]
         }
@@ -64,7 +64,7 @@
             "text": {
               "expr": {
                 "Literal": {
-                  "Value": "'Gesamterlös je Anreisemonat'"
+                  "Value": "'Gebuchter Umsatz je Anreisemonat'"
                 }
               }
             },
