@@ -1,0 +1,13 @@
+# Zugangsdaten
+.env
+
+# Word-Datei mit dem Power-BI-Grundgerüst bleibt lokal
+*.docx
+
+# Werkzeug- und Betriebssystemdateien
+.claude/
+.idea/
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.DS_Store
