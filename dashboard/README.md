@@ -15,10 +15,10 @@ Power-BI-Referenzlösung. Es ist zugleich das Lehrbeispiel für die Arbeitsteilu
 
 | | |
 |---|---|
-| Auf einen Blick | sechs Kacheln (Gesamterlös, Buchungen, Stornoquote, Ø Zimmerpreis, Ø Vorlaufzeit, Ø Aufenthalt) mit Mini-Säulen über alle Monate (gleiche Zeitachse, ab null) und der Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat — blau = betriebswirtschaftlich besser, rot = schlechter; Hotelvergleich (Hotels als Zeilen, Summenzeile „beide Hotels", bessere Werte markiert); Kennzahlentabelle mit den zehn Katalog-Kennzahlen je Hotel, Verlauf, Abweichungen, Minimum und Maximum |
-| Zeitverlauf | Buchungen, Erlös und Stornoquote als Säulen **untereinander**, jedes Feld mit eigener Zeitachse; Versatzstück zum Vorjahresmonat nach IBCS (gefüllt = Zuwachs, Umriss = Fehlbetrag; blau besser, rot schlechter); beschriftet sind erster Monat, Minimum, Maximum und Bezugsmonat |
-| Vertrieb | je Marktsegment und je Vertriebskanal der Anteil an den Buchungen neben dem Anteil am Erlös (gleiche Prozentskala, absolute Werte in Klammern); Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
-| Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit untereinander auf **einer Skala 0–100 %** mit Referenzlinie „insgesamt"; realisierter und durch Stornierung entgangener Erlös je Monat |
+| Auf einen Blick | sechs Kacheln (Umsatz, gebuchter Umsatz, Buchungen, Stornoquote, Ø Zimmerpreis, Ø Aufenthalt) mit Mini-Säulen über alle Monate (gleiche Zeitachse, ab null) und der Abweichung des Bezugsmonats zum Vormonat und Vorjahresmonat — blau = betriebswirtschaftlich besser, rot = schlechter; Hotelvergleich (Hotels als Zeilen, Summenzeile „beide Hotels", bessere Werte markiert); Kennzahlentabelle mit den zehn Katalog-Kennzahlen je Hotel, Verlauf, Abweichungen, Minimum und Maximum |
+| Zeitverlauf | Buchungen, Umsatz und Stornoquote als Säulen **untereinander**, jedes Feld mit eigener Zeitachse; Versatzstück zum Vorjahresmonat nach IBCS (gefüllt = Zuwachs, Umriss = Fehlbetrag; blau besser, rot schlechter); beschriftet sind erster Monat, Minimum, Maximum und Bezugsmonat |
+| Vertrieb | je Marktsegment und je Vertriebskanal der Anteil an den Buchungen neben dem Anteil am Umsatz (gleiche Prozentskala, absolute Werte in Klammern); Marktsegment × Kundentyp als Tabelle mit Datenbalken, sortierbar und nach Hotel gruppierbar |
+| Stornorisiko | Stornoquote nach Hotel, Kautionstyp, Marktsegment und Vorlaufzeit untereinander auf **einer Skala 0–100 %** mit Referenzlinie „insgesamt"; Umsatz und durch Stornierung entgangener Umsatz je Monat |
 | Herkunft | die 15 größten Länder als Balken (übrige zusammengefasst), alle Länder als sortierbare, nach Hotel gruppierbare Tabelle mit Datenbalken und CSV-Export |
 | Interaktion | Hover oder Tippen auf jede Säule, jeden Balken und jede Linie zeigt Wert, Abweichung zum Vormonat und Vorjahresmonat bzw. Anteil, Stornoquote und Abstand zur Gesamtquote; Klick setzt den Filter für alle Diagramme (Kreuzfilterung) |
 | Filter | Hotel, Anreisejahr, Zeitraum (Monat ab/bis), Marktsegment, Vertriebskanal, Kundentyp, Kautionstyp, Land, Vorlaufzeit; aktive Filter als abwählbare Chips; der Zustand steht in der Adresse („Link mit Filterzustand kopieren"). Monate außerhalb des Zeitfilters bleiben hell sichtbar, damit Vormonat und Vorjahr vergleichbar bleiben |
@@ -125,3 +125,13 @@ Repo verbinden, *Deploy Blueprint*.
 * Die Datenbankverbindung ist unverschlüsselt (siehe
   `../docs/Supabase_Setup_VPS.md`); der Zugang ist lesend und die Daten sind
   öffentlich.
+
+## Begriffe
+
+**Umsatz** = Zimmerpreis (ADR) × Nächte je Buchung, nur Übernachtung, für nicht
+stornierte Buchungen (Spalte `revenue` der Faktentabelle, `is_canceled = 0`).
+**Gebuchter Umsatz** = derselbe Wert über alle Buchungen vor Stornierung.
+**Durch Stornierung entgangener Umsatz** = Differenz der beiden. In der
+Hotellerie heißt diese Größe Logisumsatz; für die Vorlesung gilt der
+allgemeinere Begriff Umsatz. Eine Auslastung oder ein RevPAR ist nicht
+berechenbar, weil der Datensatz keine Zimmerkapazität enthält.

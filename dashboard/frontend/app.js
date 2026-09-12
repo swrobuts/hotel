@@ -16,13 +16,13 @@ const ROUTEN = ["kennzahlen", "segmente", "kanaele", "kautionen", "vorlaufzeit",
 // Die zehn Kennzahlen des Katalogs: Feldname, Titel, Formate, Richtung ("hoeherBesser": true = mehr ist gut,
 // false = weniger ist gut, null = ohne Wertung) und Definition.
 const KPIS = [
-  { feld: "gesamterloes", titel: "Gesamterlös in €", kurztitel: "Erlös", format: zahl, kachel: kurz, hoeherBesser: true, definition: "Summe von revenue = adr × total_nights, auch stornierte Buchungen" },
+  { feld: "erloes_nicht_storniert", titel: "Umsatz in €", kurztitel: "Umsatz in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "revenue der nicht stornierten Buchungen; revenue = adr × total_nights" },
+  { feld: "gesamterloes", titel: "Gebuchter Umsatz in €", kurztitel: "Gebucht in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "Summe von revenue über alle Buchungen, vor Stornierung" },
   { feld: "anzahl_buchungen", titel: "Anzahl Buchungen", kurztitel: "Buchungen", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Zeilen der Faktentabelle" },
   { feld: "stornoquote", titel: "Stornoquote", kurztitel: "Storno", format: prozent, kachel: prozent, hoeherBesser: false, klasse: "storno", definition: "Anteil der Buchungen mit is_canceled = 1" },
   { feld: "adr", titel: "Ø Zimmerpreis (ADR) in €", kurztitel: "Ø ADR in €", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von adr (Average Daily Rate)" },
-  { feld: "vorlaufzeit", titel: "Ø Vorlaufzeit in Tagen", kurztitel: "Ø Vorlauf (Tage)", format: dezimal1, kachel: dezimal1, hoeherBesser: null, definition: "Mittelwert von lead_time" },
   { feld: "aufenthaltsdauer", titel: "Ø Aufenthalt in Nächten", kurztitel: "Ø Nächte", format: dezimal, kachel: dezimal, hoeherBesser: true, definition: "Mittelwert von total_nights" },
-  { feld: "erloes_nicht_storniert", titel: "Erlös nicht stornierter Buchungen in €", kurztitel: "Erlös realisiert in €", format: zahl, kachel: kurz, hoeherBesser: true, definition: "revenue der Buchungen mit is_canceled = 0" },
+  { feld: "vorlaufzeit", titel: "Ø Vorlaufzeit in Tagen", kurztitel: "Ø Vorlauf (Tage)", format: dezimal1, kachel: dezimal1, hoeherBesser: null, definition: "Mittelwert von lead_time" },
   { feld: "zimmernaechte", titel: "Gebuchte Zimmernächte", kurztitel: "Zimmernächte", format: zahl, kachel: zahl, hoeherBesser: true, definition: "Summe von total_nights; Ersatz für die Auslastung, weil die Kapazität fehlt" },
   { feld: "wiederholungsgaeste", titel: "Wiederholungsgast-Anteil", kurztitel: "Wiederholungsgäste", format: prozent, kachel: prozent, hoeherBesser: true, definition: "Anteil der Buchungen mit is_repeated_guest = 1" },
   { feld: "sonderwuensche", titel: "Anteil mit Sonderwünschen", kurztitel: "Sonderwünsche", format: prozent, kachel: prozent, hoeherBesser: null, definition: "Anteil der Buchungen mit total_of_special_requests > 0" },
@@ -418,11 +418,11 @@ function saeulenTipp(titel, format) {
   return (z) => `${monatstext(z.datum)}\n${titel}: ${format(z.wert)}\nVormonat ${z.vormonat != null ? format(z.vormonat) : "–"}: ${abweichungText(z.dVormonat)}\nVorjahresmonat ${z.vorjahr != null ? format(z.vorjahr) : "–"}: ${abweichungText(z.dVorjahr)}`;
 }
 
-// Drei Säulendiagramme untereinander mit einer Zeitachse: Buchungen, Erlös, Stornoquote;
+// Drei Säulendiagramme untereinander mit einer Zeitachse: Buchungen, Umsatz, Stornoquote;
 // Versatzstück zum Vorjahresmonat blau, wenn besser, rot, wenn schlechter.
 function zeitverlaufZeichnen(d) {
   const felder = [["zeit-buchungen", "Anzahl Buchungen", "anzahl_buchungen", zahl, true, false],
-    ["zeit-erloes", "Gesamterlös in EUR", "gesamterloes", kurz, true, false],
+    ["zeit-erloes", "Umsatz in EUR", "erloes_nicht_storniert", kurz, true, false],
     ["zeit-storno", "Stornoquote", "stornoquote", prozent0, false, true]];
   if (d.monate.length < 2) { for (const [id] of felder) document.getElementById(id).replaceChildren(); return; }
   for (const [id, titel, feld, format, hoeherBesser] of felder) {
@@ -435,17 +435,17 @@ function zeitverlaufZeichnen(d) {
 
 // Tooltip einer Dimensionszeile: Buchungen, Anteil, Stornoquote, Tagesrate.
 function dimensionTipp(dimension, kategorie, gesamt) {
-  return (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})\nStornoquote ${prozent(z.stornoquote)}\nØ Zimmerpreis ${dezimal(z.adr)} EUR\nErlös ${kurz(z.erloes)} EUR`;
+  return (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anzahl / gesamt)})\nStornoquote ${prozent(z.stornoquote)}\nØ Zimmerpreis ${dezimal(z.adr)} EUR\nUmsatz ${kurz(z.erloes_nicht_storniert)} EUR`;
 }
 
 // Vertrieb: je Marktsegment und je Vertriebskanal der Anteil an den Buchungen neben dem
 // Anteil am Umsatz (gleiche Skala), dann die Tabelle Marktsegment × Kundentyp.
 function vertriebZeichnen(d) {
   const paar = (id, daten, kategorie, dimension) => {
-    const gesamtAnzahl = d3.sum(daten, (z) => z.anzahl), gesamtErloes = d3.sum(daten, (z) => z.erloes);
-    const zeilen = daten.map((z) => ({ ...z, anteil1: z.anzahl / gesamtAnzahl, absolut1: z.anzahl, anteil2: z.erloes / gesamtErloes, absolut2: z.erloes }));
-    const tipp = (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anteil1)})\n${kurz(z.erloes)} EUR Erlös (${prozent(z.anteil2)})\nØ Zimmerpreis ${dezimal(z.adr)} EUR · Stornoquote ${prozent(z.stornoquote)}`;
-    zeichnen(id, (el) => balkenPaar(el, zeilen, { kategorie, titel1: "Anteil an den Buchungen", titel2: "Anteil am Erlös", format1: zahl, format2: kurz,
+    const gesamtAnzahl = d3.sum(daten, (z) => z.anzahl), gesamtUmsatz = d3.sum(daten, (z) => z.erloes_nicht_storniert);
+    const zeilen = daten.map((z) => ({ ...z, anteil1: z.anzahl / gesamtAnzahl, absolut1: z.anzahl, anteil2: z.erloes_nicht_storniert / gesamtUmsatz, absolut2: z.erloes_nicht_storniert }));
+    const tipp = (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anteil1)})\n${kurz(z.erloes_nicht_storniert)} EUR Umsatz (${prozent(z.anteil2)})\nØ Zimmerpreis ${dezimal(z.adr)} EUR · Stornoquote ${prozent(z.stornoquote)}`;
+    zeichnen(id, (el) => balkenPaar(el, zeilen, { kategorie, titel1: "Anteil an den Buchungen", titel2: "Anteil am Umsatz", format1: zahl, format2: kurz,
       klarname: (w) => klarname(dimension, w), aktiv: zustand.filter[dimension], beiKlick: (z) => filterSetzen(dimension, z[kategorie]), tipp }));
   };
   paar("balken-segment", d.segmente, "segment", "segment");
@@ -488,10 +488,10 @@ function stornoZeichnen(d) {
   zeichnen("storno-vorlaufzeit", (el) => balken(el, d.vorlauf, { ...gemeinsam, kategorie: "vorlaufzeit", klarname: (w) => klarname("vorlaufzeit", w), sortieren: false, aktiv: zustand.filter.vorlaufzeit, beiKlick: (z) => filterSetzen("vorlaufzeit", z.vorlaufzeit), tipp: tipp("vorlaufzeit", "vorlaufzeit") }));
 }
 
-// Realisierter und durch Stornierung entgangener Erlös je Anreisemonat als gestapelte Säulen.
+// Umsatz und durch Stornierung entgangener Umsatz je Anreisemonat als gestapelte Säulen.
 function erloesverlustZeichnen(d) {
   const daten = d.monate.map((m) => ({ datum: m.datum, imFilter: m.imFilter, bezug: m.bezug, realisiert: m.erloes_nicht_storniert || 0, storniert: m.erloes_storniert || 0 }));
-  const tipp = (z) => `${monatstext(z.datum)}\nkalkuliert ${kurz(z.realisiert + z.storniert)} EUR\nrealisiert ${kurz(z.realisiert)} EUR\ndurch Stornierung entgangen ${kurz(z.storniert)} EUR (${prozent(z.storniert / ((z.realisiert + z.storniert) || 1))})`;
+  const tipp = (z) => `${monatstext(z.datum)}\ngebucht ${kurz(z.realisiert + z.storniert)} EUR\nUmsatz ${kurz(z.realisiert)} EUR\ndurch Stornierung entgangen ${kurz(z.storniert)} EUR (${prozent(z.storniert / ((z.realisiert + z.storniert) || 1))})`;
   zeichnen("erloesverlust", (el) => (daten.length ? gestapelteSaeulen(el, daten, { klickMonat: monatSetzen, tipp }) : document.createElement("div")));
 }
 
@@ -520,7 +520,7 @@ function laendertabelleZeichnen(d) {
     { feld: "anzahl", titel: "Buchungen", format: zahl, numerisch: true, balken: true, aggregat: summe("anzahl") },
     { feld: "anteil", titel: "Anteil", format: prozent, numerisch: true, aggregat: (g) => summe("anzahl")(g) / gesamt },
     { feld: "naechte", titel: "Zimmernächte", format: zahl, numerisch: true, balken: true, aggregat: summe("naechte") },
-    { feld: "erloes", titel: "Erlös in €", format: zahl, numerisch: true, balken: true, aggregat: summe("erloes") },
+    { feld: "erloes_nicht_storniert", titel: "Umsatz in €", format: zahl, numerisch: true, balken: true, aggregat: summe("erloes_nicht_storniert") },
     { feld: "stornoquote", titel: "Stornoquote", format: prozent, numerisch: true, balken: true, klasse: "storno", aggregat: quote("stornierungen", "anzahl") },
     { feld: "adr", titel: "Ø ADR in €", format: dezimal, numerisch: true, aggregat: quote("adr_summe", "anzahl") },
   ];
@@ -544,8 +544,8 @@ function zeichnen(id, bauen) {
 
 // Lädt die Ländertabelle als CSV herunter (deutsches Format: Semikolon, Komma als Dezimalzeichen).
 function csvExport() {
-  const zeilen = [["code", "land", "buchungen", "zimmernaechte", "erloes", "stornoquote", "adr"].join(";")];
-  for (const z of zustand.daten.laender.daten) zeilen.push([z.land, klarname("land", z.land), z.anzahl, z.naechte, z.erloes, z.stornoquote, z.adr].map((w) => String(w).replace(".", ",")).join(";"));
+  const zeilen = [["code", "land", "buchungen", "zimmernaechte", "umsatz", "gebuchter_umsatz", "stornoquote", "adr"].join(";")];
+  for (const z of zustand.daten.laender.daten) zeilen.push([z.land, klarname("land", z.land), z.anzahl, z.naechte, z.erloes_nicht_storniert, z.erloes, z.stornoquote, z.adr].map((w) => String(w).replace(".", ",")).join(";"));
   const datei = new Blob(["﻿" + zeilen.join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(datei); link.download = "herkunftslaender.csv"; link.click();
