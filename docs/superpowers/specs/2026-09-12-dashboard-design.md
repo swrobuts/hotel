@@ -25,8 +25,9 @@ Zahlen als JSON, JavaScript zeichnet; jedes Diagramm zeigt auf Wunsch sein SQL.
   `/api/kanaele`, `/api/segment_kundentyp`, `/api/storno_hotel`,
   `/api/storno_segment`, `/api/storno_kaution`, `/api/storno_vorlaufzeit`,
   `/api/erloes_datum`, `/api/laender`; statisches Frontend unter `/`.
-* `frontend/index.html`, `app.js`, `style.css` — Plotly.js 3.1.0 (jsDelivr,
-  Version festgelegt).
+* `frontend/index.html`, `app.js`, `diagramme.js`, `format.js`, `style.css` —
+  Observable Plot 0.6.17 auf D3 7.9 (jsDelivr, Versionen festgelegt); Plotly wurde
+  zugunsten der Tufte/Few/Hichert-Gestaltung verworfen (Entscheidung Robert, 12.09.2026).
 * `backend/tests/test_abfragen.py` — Kontrollwerte gegen die lebende Datenbank.
 * `Dockerfile`, `requirements.txt`, `README.md`; `render.yaml` im Repo-Root
   (`rootDir: dashboard`).

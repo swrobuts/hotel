@@ -19,17 +19,17 @@
 ---
 
 ### Task 1: Backend (Datenbank, Filter, Abfragen, Routen) mit Tests
-- [ ] `datenbank.py`, `filter.py`, `abfragen.py`, `main.py`, `requirements.txt` schreiben.
-- [ ] `tests/test_abfragen.py`: Kontrollwerte (119390, 37,0 %, 101,83, 25.996.260; City Hotel 79330; PRT 48590; Filterkombination), Routen per TestClient.
-- [ ] `pytest` grün; Commit.
+- [x] `datenbank.py`, `filter.py`, `abfragen.py`, `main.py`, `requirements.txt` schreiben.
+- [x] `tests/test_abfragen.py`: Kontrollwerte (119390, 37,0 %, 101,83, 25.996.260; City Hotel 79330; PRT 48590; Filterkombination), Routen per TestClient.
+- [x] `pytest` grün; Commit.
 
 ### Task 2: Frontend
-- [ ] `index.html`, `style.css`, `app.js`: Filterleiste, Chips, Kacheln, 14 Diagramme/Tabelle, Klick-Filter, URL-Zustand, SQL-Anzeige, CSV-Export.
-- [ ] Lokal starten (Port 8765), im Browser prüfen: Kennzahlen, Klick-Filter, Karte, Tabelle sortieren, Link; Commit.
+- [x] `index.html`, `style.css`, `app.js`: Filterleiste, Chips, Kacheln, 14 Diagramme/Tabelle, Klick-Filter, URL-Zustand, SQL-Anzeige, CSV-Export.
+- [x] Lokal starten (Port 8765), im Browser prüfen: Kennzahlen, Klick-Filter, Karte, Tabelle sortieren, Link; Commit.
 
 ### Task 3: Container und Render
-- [ ] `Dockerfile`, `.dockerignore`, `render.yaml` (Root, `rootDir: dashboard`); lokaler `docker build` und Start; Commit, Push.
-- [ ] Render: Blueprint anlegen (Chrome, Roberts Konto), Build abwarten, URL prüfen.
+- [x] `Dockerfile`, `.dockerignore`, `render.yaml` (Root, `rootDir: dashboard`); lokaler `docker build` und Start; Commit, Push.
+- [x] Render: Blueprint anlegen (Chrome, Roberts Konto), Build abwarten, URL prüfen.
 
 ### Task 4: Dokumentation
-- [ ] `dashboard/README.md` (Funktionen, lokal starten, Aufbau, Routen, Deploy), Haupt-README (Link, URL), Bildschirmfoto; Plan abhaken; Commit, Push.
+- [x] `dashboard/README.md` (Funktionen, lokal starten, Aufbau, Routen, Deploy), Haupt-README (Link, URL), Bildschirmfoto; Plan abhaken; Commit, Push.

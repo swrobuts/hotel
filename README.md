@@ -9,6 +9,10 @@ PostgreSQL-Datenbank für Power BI, Tableau und eigene Auswertungen bereitsteht.
 Der Datensatz umfasst 119.390 Buchungen eines Stadthotels und eines Resorthotels
 in Portugal (Anreisen Juli 2015 bis August 2017).
 
+**Interaktives Dashboard:** <https://hotel-dashboard-cuoi.onrender.com> — liest
+live aus der Datenbank, Kreuzfilterung per Klick, Weltkarte, SQL je Diagramm
+(Beschreibung in [`dashboard/README.md`](dashboard/README.md)).
+
 ## Zugang zur Datenbank
 
 Die Datenbank ist fertig geladen. Der Zugang ist lesend und für alle Werkzeuge
@@ -110,6 +114,7 @@ Server schreiben und wird für den Download nicht gebraucht.
 | `sql/02_load_data.py` | Ladeskript: leert die Tabellen und lädt die CSV-Dateien per `COPY` |
 | `sql/03_rolle_studi_hotel.sql` | lesende Rolle `studi_hotel` |
 | `powerbi/` | Referenzlösung des Power-BI-Reports: `Hotel.pbix`, Projekt `Hotel.pbip`, Abbildungen der vier Seiten |
+| `dashboard/` | interaktives Dashboard (FastAPI + Observable Plot), Dockerfile; `render.yaml` im Repo-Root |
 | `docs/Supabase_Setup_VPS.md` | die Instanz, Verbindungsdaten, Neuaufbau der Datenbank, Sicherheit |
 | `docs/superpowers/` | Entwurf und Umsetzungsplan der Produktivsetzung |
 | `requirements.txt`, `.env.example` | Python-Abhängigkeiten, Vorlage für die Betreiberverbindung |
@@ -150,5 +155,4 @@ die auch auf Kaggle als *Hotel Booking Demand* verfügbar ist.
 
 ## Nächste Schritte
 
-Umsetzung des Reports in Tableau (analog zur Power-BI-Referenzlösung); danach
-ein interaktives Dashboard in Python/JavaScript.
+Umsetzung des Reports in Tableau, analog zur Power-BI-Referenzlösung.
