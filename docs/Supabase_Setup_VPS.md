@@ -88,7 +88,7 @@ ssh vps 'docker exec -i supabase-db psql -U postgres -d hotel -v ON_ERROR_STOP=1
 ```
 
 **Schritt 3 – Daten laden** (leert jede Tabelle und lädt die CSV-Dateien aus
-`data/` per `COPY`; etwa zehn Sekunden):
+`data/` per `COPY`; dauert unter einer halben Minute):
 
 ```bash
 pip install -r requirements.txt

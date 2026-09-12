@@ -29,7 +29,7 @@
 **Interfaces:**
 - Produces: Datenbank `hotel` (Owner `postgres`) und Login-Rolle `studi_hotel`; Task 2 lädt in diese Datenbank, Task 3 prüft die Rolle.
 
-- [ ] **Step 1: Rollenskript schreiben**
+- [x] **Step 1: Rollenskript schreiben**
 
 ```sql
 -- =====================================================================
@@ -70,7 +70,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA hotel_bi
     GRANT SELECT ON TABLES TO studi_hotel;
 ```
 
-- [ ] **Step 2: Datenbank anlegen (nur wenn sie fehlt) und Schema einspielen**
+- [x] **Step 2: Datenbank anlegen (nur wenn sie fehlt) und Schema einspielen**
 
 ```bash
 ssh vps 'docker exec -i supabase-db psql -U supabase_admin -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname = '"'"'hotel'"'"'"'
@@ -81,13 +81,13 @@ ssh vps 'docker exec -i supabase-db psql -U postgres -d hotel -v ON_ERROR_STOP=1
 
 Erwartung: `CREATE DATABASE`, danach `CREATE SCHEMA` … `CREATE INDEX` ohne Fehler.
 
-- [ ] **Step 3: Rollenskript einspielen**
+- [x] **Step 3: Rollenskript einspielen**
 
 ```bash
 ssh vps 'docker exec -i supabase-db psql -U supabase_admin -d hotel -v ON_ERROR_STOP=1 -f -' < sql/03_rolle_studi_hotel.sql
 ```
 
-- [ ] **Step 4: Prüfen**
+- [x] **Step 4: Prüfen**
 
 ```bash
 ssh vps 'docker exec -i supabase-db psql -U supabase_admin -d hotel -Atc "SELECT rolname, rolcanlogin, rolsuper, rolcreatedb, rolconfig FROM pg_roles WHERE rolname = '"'"'studi_hotel'"'"'"'
@@ -96,7 +96,7 @@ ssh vps 'docker exec -i supabase-db psql -U supabase_admin -d hotel -Atc "SELECT
 
 Erwartung: `studi_hotel|t|f|f|{default_transaction_read_only=on,search_path=hotel_bi,statement_timeout=10min,idle_in_transaction_session_timeout=5min}` und `t|f`.
 
-- [ ] **Step 5: Zweiter Lauf des Rollenskripts (Idempotenz), dann Commit**
+- [x] **Step 5: Zweiter Lauf des Rollenskripts (Idempotenz), dann Commit**
 
 ```bash
 ssh vps 'docker exec -i supabase-db psql -U supabase_admin -d hotel -v ON_ERROR_STOP=1 -f -' < sql/03_rolle_studi_hotel.sql
@@ -116,7 +116,7 @@ git commit -m "Rolle studi_hotel: nur lesend auf hotel_bi"
 - Consumes: Datenbank `hotel` mit Schema `hotel_bi` aus Task 1.
 - Produces: gefüllte Tabellen; Task 3 prüft die Zeilenzahlen (siehe Erwartung in Step 4).
 
-- [ ] **Step 1: Umgebungsdateien anlegen**
+- [x] **Step 1: Umgebungsdateien anlegen**
 
 `requirements.txt`:
 ```
@@ -132,7 +132,7 @@ psycopg2-binary>=2.9
 DATABASE_URL=postgresql://postgres:KENNWORT@supabase.butscher.cloud:5433/hotel
 ```
 
-- [ ] **Step 2: Docstring und Kommentare des Ladeskripts mit echten Umlauten schreiben**
+- [x] **Step 2: Docstring und Kommentare des Ladeskripts mit echten Umlauten schreiben**
 
 Alle Vorkommen von `fuer`, `laedt`, `Fremdschluessel`, `ausschliesslich`, `ueber`, `Uebungs`, `fuehrt`, `geloescht`, `gewuenscht`, `Ausfuehrung`, `Praefix`, `muessen`, `abhaengt`, `Bestaetigung`, `Ausfuehrende`, `abhaengige`, `gross`, `Uebung`, `Dateiname_ohne_endung` in Kommentaren und Strings durch die Umlautschreibweise ersetzen; Beispiel-URL in Docstring und Fehlermeldung auf `…@supabase.butscher.cloud:5433/hotel` setzen; den Verweis `docs/Supabase_Setup_VPS.md` beibehalten. Bezeichner nicht anfassen.
 
@@ -142,7 +142,7 @@ grep -nE "fuer|laedt|ueber|muess|schluess" sql/02_load_data.py
 ```
 Erwartung: keine Treffer. `python3 -m py_compile sql/02_load_data.py` ohne Fehler.
 
-- [ ] **Step 3: Daten laden**
+- [x] **Step 3: Daten laden**
 
 ```bash
 ADMIN_PW=$(grep '^PGPASSWORD=' "../BurgerMetrics/BurgerMetrics_Website/.env" | cut -d= -f2-)
@@ -151,7 +151,7 @@ DATABASE_URL="postgresql://postgres:${ADMIN_PW}@supabase.butscher.cloud:5433/hot
 
 Erwartung: neun Zeilen `Lade … -> hotel_bi.… ` mit „Zeilen geladen", zuletzt `fact_bookings` mit `119.390 Zeilen geladen.`
 
-- [ ] **Step 4: Zeilenzahlen prüfen**
+- [x] **Step 4: Zeilenzahlen prüfen**
 
 ```bash
 ssh vps 'docker exec -i supabase-db psql -U postgres -d hotel -Atc "SELECT '"'"'dim_hotel'"'"', count(*) FROM hotel_bi.dim_hotel UNION ALL SELECT '"'"'dim_date'"'"', count(*) FROM hotel_bi.dim_date UNION ALL SELECT '"'"'dim_market_segment'"'"', count(*) FROM hotel_bi.dim_market_segment UNION ALL SELECT '"'"'dim_distribution_channel'"'"', count(*) FROM hotel_bi.dim_distribution_channel UNION ALL SELECT '"'"'dim_customer_type'"'"', count(*) FROM hotel_bi.dim_customer_type UNION ALL SELECT '"'"'dim_meal'"'"', count(*) FROM hotel_bi.dim_meal UNION ALL SELECT '"'"'dim_deposit_type'"'"', count(*) FROM hotel_bi.dim_deposit_type UNION ALL SELECT '"'"'dim_country'"'"', count(*) FROM hotel_bi.dim_country UNION ALL SELECT '"'"'fact_bookings'"'"', count(*) FROM hotel_bi.fact_bookings"'
@@ -159,7 +159,7 @@ ssh vps 'docker exec -i supabase-db psql -U postgres -d hotel -Atc "SELECT '"'"'
 
 Erwartung: `dim_hotel|2`, `dim_date|1064`, `dim_market_segment|8`, `dim_distribution_channel|5`, `dim_customer_type|4`, `dim_meal|5`, `dim_deposit_type|3`, `dim_country|178`, `fact_bookings|119390` (Zeilen der CSV-Dateien ohne Kopfzeile).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add sql/02_load_data.py requirements.txt .env.example
@@ -175,7 +175,7 @@ git commit -m "Ladeskript: echte Umlaute, Beispiel-URL auf hotel; Umgebungsdatei
 **Interfaces:**
 - Consumes: Rolle `studi_hotel` (Task 1), geladene Tabellen (Task 2).
 
-- [ ] **Step 1: Lesen als studi_hotel vom Mac aus**
+- [x] **Step 1: Lesen als studi_hotel vom Mac aus**
 
 ```bash
 python3 - <<'PY'
@@ -190,7 +190,7 @@ PY
 
 Erwartung: `hotel_bi`, `119390`, `[('City Hotel', 79330), ('Resort Hotel', 40060)]`.
 
-- [ ] **Step 2: Schreiben muss scheitern, andere Datenbank muss scheitern**
+- [x] **Step 2: Schreiben muss scheitern, andere Datenbank muss scheitern**
 
 ```bash
 python3 - <<'PY'
@@ -223,7 +223,7 @@ Erwartung: drei Zeilen `abgelehnt: … read-only transaction` bzw. `permission d
 **Interfaces:**
 - Consumes: Rolle `studi_hotel` (Task 1) für Zelle 28.
 
-- [ ] **Step 1: Änderungen per Python-Skript einspielen (nbformat)**
+- [x] **Step 1: Änderungen per Python-Skript einspielen (nbformat)**
 
 Zelle 0: nach der ersten Überschrift einen Colab-Link einfügen:
 ```
@@ -304,7 +304,7 @@ ORDER  BY h.hotel
 pd.read_sql(sql, engine)
 ```
 
-- [ ] **Step 2: Notebook ausführen, Ausgaben prüfen**
+- [x] **Step 2: Notebook ausführen, Ausgaben prüfen**
 
 ```bash
 cd notebooks && MPLBACKEND=Agg python3 -m jupyter nbconvert --to notebook --execute --ExecutePreprocessor.timeout=300 BI_Hotel_Booking_Demand.ipynb --output /tmp/hotel_nb_out.ipynb
@@ -312,7 +312,7 @@ cd notebooks && MPLBACKEND=Agg python3 -m jupyter nbconvert --to notebook --exec
 
 Erwartung: kein `error`-Output; Zelle 28 liefert `City Hotel 79330 41.7` und `Resort Hotel 40060 27.8`; Zelle 10 zeigt `Anzahl Buchungen 119390` ohne Nachkommastellen; keine `FutureWarning`.
 
-- [ ] **Step 3: CSV-Ausgabe mit `data/` vergleichen, Ausgaben entfernen**
+- [x] **Step 3: CSV-Ausgabe mit `data/` vergleichen, Ausgaben entfernen**
 
 ```bash
 for f in notebooks/*.csv; do cmp "$f" "data/$(basename "$f")" && echo "identisch: $(basename "$f")"; done
@@ -322,7 +322,7 @@ python3 -m jupyter nbconvert --clear-output --inplace notebooks/BI_Hotel_Booking
 
 Erwartung: neun Mal `identisch`.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add notebooks/BI_Hotel_Booking_Demand.ipynb
@@ -336,14 +336,14 @@ git commit -m "Notebook: Colab-Link, lesender Zugriff auf hotel, pandas-Warnung,
 **Files:**
 - Modify: `docs/Supabase_Setup_VPS.md` (vollständig neu)
 
-- [ ] **Step 1: Datei neu schreiben** mit den Abschnitten
+- [x] **Step 1: Datei neu schreiben** mit den Abschnitten
   1. Die Instanz (VPS, `supabase-db`, PostgreSQL 17.6, Port 5433, SSL aus, Datenbank `hotel`, Schema `hotel_bi`).
   2. Verbindungsdaten (Tabelle wie in Zelle 27; Admin: `postgres`, Kennwort auf dem VPS in `/root/supabase/docker/.env`).
   3. Neuaufbau der Datenbank in drei Befehlen (`CREATE DATABASE hotel OWNER postgres`, `01_schema.sql`, `02_load_data.py`, `03_rolle_studi_hotel.sql`) mit den exakten Kommandos aus Task 1 und 2.
   4. Sicherheit: warum die Rolle nur liest, warum das Kennwort im Repo steht, dass SSL aus ist und was das für Power BI/Tableau bedeutet.
   5. Quelle: Self-Hosting-Doku von Supabase.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add docs/Supabase_Setup_VPS.md
@@ -357,7 +357,7 @@ git commit -m "Anleitung: reale Instanz, Zugang, Neuaufbau"
 **Files:**
 - Create: `README.md`
 
-- [ ] **Step 1: README schreiben** mit den Abschnitten
+- [x] **Step 1: README schreiben** mit den Abschnitten
   1. Titel, ein Absatz Zweck, Colab-Badge.
   2. Zugang zur Datenbank (Tabelle Host/Port/Datenbank/Schema/Benutzer/Kennwort).
   3. Schnellstart je Werkzeug: Colab (Link), Power BI Desktop (PostgreSQL-Datenbank, Server `supabase.butscher.cloud:5433`, Datenbank `hotel`, Import-Modus, Anmeldung „Datenbank", Nachfrage zur unverschlüsselten Verbindung bestätigen, im Navigator Schema `hotel_bi`), Tableau (PostgreSQL, Treiber-Hinweis, SSL aus), DBeaver/psql (Verbindungszeile), Python (drei Zeilen mit `pd.read_sql`).
@@ -367,7 +367,7 @@ git commit -m "Anleitung: reale Instanz, Zugang, Neuaufbau"
   7. Datenquelle und Lizenz (Antonio, de Almeida & Nunes 2019; Kaggle; TidyTuesday).
   8. Was als Nächstes kommt (Power BI/Tableau, Dashboard) — ein Satz.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add README.md
@@ -378,13 +378,13 @@ git commit -m "README: Zugang, Schnellstart, Aufbau"
 
 ### Task 7: GitHub-Repo, Push, Abnahme
 
-- [ ] **Step 1: Repo anlegen und pushen**
+- [x] **Step 1: Repo anlegen und pushen**
 
 ```bash
 gh repo create swrobuts/hotel --public --description "BI-Lehrprojekt Hotel Booking Demand: Colab-Notebook, Sternschema, Postgres-Datenbank hotel" --source . --remote origin --push
 ```
 
-- [ ] **Step 2: Frischer Klon, Ladeskript daraus**
+- [x] **Step 2: Frischer Klon, Ladeskript daraus**
 
 ```bash
 git clone https://github.com/swrobuts/hotel.git /tmp/hotel-klon && cd /tmp/hotel-klon
@@ -395,11 +395,11 @@ DATABASE_URL="postgresql://postgres:${ADMIN_PW}@supabase.butscher.cloud:5433/hot
 
 Erwartung: kein `.docx` im Klon; Ladeskript endet mit `Fertig.`; Zeilenzahlen wie in Task 2 Step 4.
 
-- [ ] **Step 3: Colab-Link und Repo-Seite aufrufen**
+- [x] **Step 3: Colab-Link und Repo-Seite aufrufen**
 
 Browser: `https://colab.research.google.com/github/swrobuts/hotel/blob/main/notebooks/BI_Hotel_Booking_Demand.ipynb` und `https://github.com/swrobuts/hotel` — Notebook öffnet sich, README wird angezeigt.
 
-- [ ] **Step 4: Plan-Häkchen setzen, Commit, Push**
+- [x] **Step 4: Plan-Häkchen setzen, Commit, Push**
 
 ```bash
 git add docs/superpowers/plans/2026-09-12-hotel-produktivsetzung.md
