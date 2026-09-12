@@ -146,3 +146,7 @@ footer p { margin: 0 0 8px; }
   #tabelle-laender .spalte-naechte, #tabelle-laender .spalte-adr, #tabelle-laender .spalte-erloes { display: none; }
   td .definition { max-width: 200px; }
 }
+
+/* Tooltip der Mini-Säulen (Kacheln, Kennzahlentabelle) */
+.tooltip { position: fixed; z-index: 20; pointer-events: none; background: var(--tinte); color: #fff; font-size: 12.5px; line-height: 1.4; padding: 6px 9px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); white-space: nowrap; }
+.kachel-verlauf svg, td .sparkline svg { cursor: crosshair; }

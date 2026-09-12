@@ -141,6 +141,11 @@ function saeulenabstand(breite, anzahl, rand) {
   return Math.max(2, feld * 0.22);
 }
 
+// Die Mitte eines Monats (d3-Intervalle runden Schrittweiten ab, deshalb von Hand).
+function monatsmitte(datum) {
+  return new Date((+datum + +d3.utcMonth.offset(datum, 1)) / 2);
+}
+
 // Trennlinien und Jahreszahlen an den Jahresgrenzen als Führung.
 function jahresmarken(bereich) {
   return d3.utcYears(bereich[0], bereich[1]);
@@ -153,7 +158,7 @@ function beschriftungenHeben(daten, beschriftet, oben) {
     const i = daten.indexOf(d);
     const nachbarn = [daten[i - 1], d, daten[i + 1]].filter(Boolean);
     const hoehe = d3.max(nachbarn, oben);
-    return { ...d, __eigene: oben(d), __hoehe: hoehe, __mitte: d3.utcMonth.offset(d.datum, 0.5), __text: null };
+    return { ...d, __eigene: oben(d), __hoehe: hoehe, __mitte: monatsmitte(d.datum), __text: null };
   });
 }
 
@@ -229,14 +234,62 @@ function gestapelteSaeulen(element, daten, o) {
   });
 }
 
+// Ein gemeinsamer Tooltip (HTML) für kleine Diagramme, in denen Plot.tip keinen Platz hat.
+// Zeigt sich bei Mausbewegung oder Tippen über der Säule, die dem Zeiger am nächsten liegt.
+let tooltipElement = null;
+function tooltip() {
+  if (!tooltipElement) {
+    tooltipElement = document.createElement("div");
+    tooltipElement.className = "tooltip";
+    tooltipElement.hidden = true;
+    document.body.append(tooltipElement);
+  }
+  return tooltipElement;
+}
+
+// Hängt den Tooltip an ein SVG: `naechste(x)` liefert zur x-Position (SVG-Koordinaten) die Datenzeile,
+// `text(d)` den Tooltip-Text (Zeilen mit \n).
+function tooltipAnheften(svg, naechste, text) {
+  const zeige = (ereignis) => {
+    const rechteck = svg.getBoundingClientRect();
+    const skala = svg.viewBox.baseVal.width ? svg.viewBox.baseVal.width / rechteck.width : 1;
+    const d = naechste((ereignis.clientX - rechteck.left) * skala);
+    if (!d) return verstecke();
+    const t = tooltip();
+    t.textContent = "";
+    for (const zeile of text(d).split("\n")) { const p = document.createElement("div"); p.textContent = zeile; t.append(p); }
+    t.hidden = false;
+    const breite = t.offsetWidth, hoehe = t.offsetHeight;
+    let links = ereignis.clientX + 12, oben = ereignis.clientY - hoehe - 12;
+    if (links + breite > window.innerWidth - 8) links = ereignis.clientX - breite - 12;
+    if (oben < 8) oben = ereignis.clientY + 16;
+    t.style.left = links + "px"; t.style.top = oben + "px";
+  };
+  const verstecke = () => { tooltip().hidden = true; };
+  svg.addEventListener("pointermove", zeige);
+  svg.addEventListener("pointerdown", zeige);
+  svg.addEventListener("pointerleave", verstecke);
+  svg.style.touchAction = "pan-y";
+}
+
 // Winzige Säulen ab null für Kacheln und Tabellenzeilen: gleiche Zeitachse für alle,
 // Skala je Kennzahl von null bis zum Maximum; der Bezugsmonat ist dunkel, Monate außerhalb des Filters hell.
+// Hover oder Tippen zeigt Monat, Wert und die Veränderung zum Vormonat und Vorjahresmonat.
 function minisaeulen(daten, o = {}) {
   const farbe = (d) => (d.bezug ? (o.farbe || FARBE.tinte) : d.imFilter === false ? FARBE.balkenHell : (o.farbe || FARBE.balken));
-  return Plot.plot({
+  const format = o.format || zahl;
+  const bereich = [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)];
+  const svg = Plot.plot({
     width: o.breite || 150, height: o.hoehe || 34, marginLeft: 2, marginRight: 2, marginTop: 2, marginBottom: 2, axis: null,
-    x: { domain: [d3.min(daten, (d) => d.datum), d3.utcMonth.offset(d3.max(daten, (d) => d.datum), 1)] },
+    x: { domain: bereich },
     y: { domain: [0, d3.max(daten, (d) => d.wert) || 1] },
-    marks: [Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: farbe, insetLeft: 0.6, insetRight: 0.6, title: (d) => monatstext(d.datum) + ": " + (o.format || zahl)(d.wert) })],
+    marks: [Plot.rectY(daten, { x: "datum", interval: "month", y1: 0, y2: "wert", fill: farbe, insetLeft: 0.6, insetRight: 0.6 })],
   });
+  const x = svg.scale("x");
+  tooltipAnheften(svg, (px) => {
+    const zeit = x.invert(px);
+    return d3.least(daten, (d) => Math.abs(monatsmitte(d.datum) - zeit));
+  }, (d) => `${monatstext(d.datum)}: ${format(d.wert)}` + (d.dVormonat !== undefined
+    ? `\nVormonat ${abweichungText(d.dVormonat)} · Vorjahresmonat ${abweichungText(d.dVorjahr)}` : ""));
+  return svg;
 }
