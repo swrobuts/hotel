@@ -5,7 +5,9 @@ beschreibt: Sternschema aus der Datenbank `hotel`, der KPI-Katalog als
 DAX-Measures und die vier Report-Seiten. Studierende bauen den Report nach dem
 Grundgerüst selbst auf und vergleichen ihr Ergebnis mit dieser Lösung.
 
-Geprüft mit Power BI Desktop 2.152 (März 2026).
+Geprüft mit Power BI Desktop 2.152 (März 2026). Datenquelle: Nuno Antonio, Ana de
+Almeida und Luis Nunes, *Hotel booking demand datasets*, Data in Brief, Band 22,
+Februar 2019 (CC BY 4.0).
 
 > **Stand 12.09.2026:** Die Measures im Projekt (`Hotel.pbip`) heißen Umsatz,
 > Gebuchter Umsatz und Durch Stornierung entgangener Umsatz. `Hotel.pbix` trägt

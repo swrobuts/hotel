@@ -3,6 +3,8 @@
 02_load_data.py
 ================================================================================
 Ladeskript für das BI-Lehrprojekt "Hotel Booking Demand" (Sternschema).
+Datenquelle: Nuno Antonio, Ana de Almeida und Luis Nunes, "Hotel booking demand
+datasets", Data in Brief, Band 22, Februar 2019 (CC BY 4.0).
 
 Liest die finalen CSV-Dateien aus dem Ordner data/ und lädt sie in die
 Tabellen, die von 01_schema.sql im Schema "hotel_bi" angelegt wurden.

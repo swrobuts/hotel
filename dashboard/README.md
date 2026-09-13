@@ -135,6 +135,9 @@ gesetzt, der Container nutzt wie auf Render den Rückfall auf die Rolle
 
 ## Hinweise
 
+* Datenquelle: Nuno Antonio, Ana de Almeida und Luis Nunes, *Hotel booking
+  demand datasets*, Data in Brief, Band 22, Februar 2019 (CC BY 4.0); vollständige
+  Angabe im README des Repos.
 * Ländercodes wie im Datensatz (ISO 3166-1 alpha-3); „CN" steht dort für
   China, „UNK" für unbekannt.
 * Die Datenbankverbindung ist unverschlüsselt (siehe

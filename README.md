@@ -158,8 +158,11 @@ Das Word-Dokument mit dem Power-BI-Grundgerüst ist nicht Teil des Repos.
 
 ## Datenquelle
 
+Die Daten stammen aus dem Artikel *Hotel booking demand datasets* von Nuno Antonio,
+Ana de Almeida und Luis Nunes, erschienen in *Data in Brief*, Band 22, Februar 2019:
+
 Antonio, N., de Almeida, A., & Nunes, L. (2019). Hotel booking demand datasets.
-*Data in Brief*, 22, 41–49. <https://doi.org/10.1016/j.dib.2018.11.126>
+*Data in Brief*, 22 (Februar 2019), 41–49. <https://doi.org/10.1016/j.dib.2018.11.126>
 (Lizenz CC BY 4.0). Verwendet wird die Fassung des TidyTuesday-Projekts vom
 11.02.2020 (<https://github.com/rfordatascience/tidytuesday/blob/main/data/2020/2020-02-11/readme.md>),
 die auch auf Kaggle als *Hotel Booking Demand* verfügbar ist.

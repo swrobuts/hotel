@@ -2,6 +2,8 @@
 -- 01_schema.sql
 -- BI-Lehrprojekt "Hotel Booking Demand" – Sternschema (Star Schema)
 -- Zielsystem: PostgreSQL (self-hosted Supabase auf einem VPS)
+-- Datenquelle: Nuno Antonio, Ana de Almeida und Luis Nunes, "Hotel booking
+-- demand datasets", Data in Brief, Band 22, Februar 2019 (CC BY 4.0)
 -- =====================================================================
 --
 -- WAS IST EIN STERNSCHEMA? (kurze Erklärung für Erstsemester)
