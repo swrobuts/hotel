@@ -6,6 +6,8 @@ gelangen (Schutz vor SQL-Injektion).
 """
 
 from dataclasses import dataclass, fields
+from datetime import date
+import re
 
 
 @dataclass
@@ -32,10 +34,18 @@ VORLAUFZEIT_BUCKET = (
 
 def naechster_monat(monat: str) -> str:
     """Gibt zu "2016-12" den ersten Tag des Folgemonats zurück ("2017-01-01")."""
-    jahr, mon = (int(teil) for teil in monat.split("-"))
+    erster = monatsanfang(monat)
+    jahr, mon = erster.year, erster.month
     if mon == 12:
-        return f"{jahr + 1}-01-01"
-    return f"{jahr}-{mon + 1:02d}-01"
+        return date(jahr + 1, 1, 1).isoformat()
+    return date(jahr, mon + 1, 1).isoformat()
+
+
+def monatsanfang(monat: str) -> date:
+    """Prüft das Format JJJJ-MM und den Kalenderwert vor der SQL-Abfrage."""
+    if not re.fullmatch(r"[0-9]{4}-[0-9]{2}", monat):
+        raise ValueError("Monate müssen das Format JJJJ-MM haben.")
+    return date.fromisoformat(monat + "-01")
 
 
 def where_klausel(filter: Filter, datum: str = "d") -> tuple[str, dict]:
@@ -85,4 +95,13 @@ def filter_aus_werten(**werte) -> Filter:
         if wert in (None, ""):
             continue
         bereinigt[feld.name] = int(wert) if feld.name == "jahr" else wert
-    return Filter(**bereinigt)
+    filter = Filter(**bereinigt)
+    if filter.jahr is not None and not 1 <= filter.jahr <= 9999:
+        raise ValueError("Das Jahr muss zwischen 1 und 9999 liegen.")
+    if filter.von:
+        monatsanfang(filter.von)
+    if filter.bis:
+        naechster_monat(filter.bis)
+    if filter.von and filter.bis and filter.von > filter.bis:
+        raise ValueError("Der Beginn des Zeitraums darf nicht nach dem Ende liegen.")
+    return filter

@@ -12,9 +12,17 @@ const monatLang = (m) => MONATE_LANG[m.monat - 1] + " " + m.jahr;
 // Text nur, wenn die Bedingung gilt; als Funktion übergeben, damit er nicht vorab ausgewertet wird.
 const wenn = (bedingung, text) => (bedingung ? (typeof text === "function" ? text() : text) : "");
 
+function stornoVorlaufText(vorlauf) {
+  if (!vorlauf.length) return "Keine Stornodaten";
+  const erster = vorlauf[0], letzter = vorlauf.at(-1);
+  return `Stornoquote nach Vorlaufzeit: ${prozent(erster.stornoquote)} bei ${klarname("vorlaufzeit", erster.vorlaufzeit)}`
+    + (vorlauf.length > 1 ? `, ${prozent(letzter.stornoquote)} bei ${klarname("vorlaufzeit", letzter.vorlaufzeit)}` : "");
+}
+
 // Nennt die Kategorie, deren Umsatzanteil am stärksten vom Buchungsanteil abweicht (mindestens 2 Prozentpunkte).
 function abweicher(zeilen, dimension) {
   const gesamtAnzahl = d3.sum(zeilen, (z) => z.anzahl), gesamtUmsatz = d3.sum(zeilen, (z) => z.erloes_nicht_storniert);
+  if (!gesamtAnzahl || !gesamtUmsatz) return "";
   const mitDelta = zeilen.map((z) => ({ ...z, delta: z.erloes_nicht_storniert / gesamtUmsatz - z.anzahl / gesamtAnzahl }));
   const groesster = d3.greatest(mitDelta, (z) => Math.abs(z.delta));
   if (!groesster || Math.abs(groesster.delta) < 0.02) return "";
@@ -46,7 +54,10 @@ function leadVertrieb(d) {
   const s = d.segmente, gesamt = d3.sum(s, (z) => z.anzahl);
   if (!s.length) return "Keine Buchungen im gewählten Ausschnitt.";
   const kanal = groesster(d.kanaele, "erloes_nicht_storniert");
-  return `${klarname("segment", s[0].segment)}: ${anteil(s[0].anzahl, gesamt)} der Buchungen. Größter Umsatzkanal: ${klarname("kanal", kanal.kanal)} (${anteil(kanal.erloes_nicht_storniert, d3.sum(d.kanaele, (z) => z.erloes_nicht_storniert))}).`;
+  return `${klarname("segment", s[0].segment)}: ${anteil(s[0].anzahl, gesamt)} der Buchungen.`
+    + (kanal && kanal.erloes_nicht_storniert > 0
+      ? ` Größter Umsatzkanal: ${klarname("kanal", kanal.kanal)} (${anteil(kanal.erloes_nicht_storniert, d3.sum(d.kanaele, (z) => z.erloes_nicht_storniert))}).`
+      : " Kein stornobereinigter Umsatz im gewählten Ausschnitt.");
 }
 
 function leadStorno(d) {
@@ -61,7 +72,7 @@ function leadHerkunft(d) {
   if (!l.length) return "Keine Buchungen im gewählten Ausschnitt.";
   const inland = l.find((z) => z.land === "PRT");
   return `${klarname("land", l[0].land)}: ${anteil(l[0].anzahl, gesamt)} der Gäste aus ${l.length} Ländern.`
-    + `${wenn(inland, () => ` Stornoquote Inland ${prozent(inland.stornoquote)}, Ausland ${prozent(d.stornoAusland)}.`)}`;
+    + `${wenn(inland, () => ` Stornoquote Inland ${prozent(inland.stornoquote)}${d.stornoAusland != null ? `, Ausland ${prozent(d.stornoAusland)}` : ""}.`)}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -92,7 +103,7 @@ function aussagen(d) {
       beschreibung("Je Vertriebskanal der Anteil an den Buchungen neben dem Anteil am stornobereinigten Umsatz, gleiche Skala, absolute Werte in Klammern")],
     pivot: [d.pivotTop ? `${klarname("kundentyp", d.pivotTop.kundentyp)} sind der häufigste Kundentyp – ${anteil(d.pivotTop.anzahl, d3.sum(d.pivot, (z) => z.anzahl))} der Buchungen` : "Keine Buchungen",
       beschreibung("Anzahl Buchungen je Marktsegment (Zeilen) und Kundentyp (Spalten), Balken relativ zum Spaltenmaximum")],
-    storno: [vl.length > 1 ? `Stornorisiko steigt mit der Vorlaufzeit: ${prozent(vl[0].stornoquote)} bei ${klarname("vorlaufzeit", vl[0].vorlaufzeit)}n, ${prozent(vl.at(-1).stornoquote)} bei ${klarname("vorlaufzeit", vl.at(-1).vorlaufzeit)}n${nonRefund ? ` – nicht erstattbare Buchungen ${prozent(nonRefund.stornoquote)}` : ""}` : "Keine Stornodaten",
+    storno: [stornoVorlaufText(vl) + (nonRefund ? ` – nicht erstattbare Buchungen ${prozent(nonRefund.stornoquote)}` : ""),
       beschreibung("Stornoquote = Anteil stornierter Buchungen, je Hotel, Kautionstyp, Marktsegment und Vorlaufzeit")],
     erloesverlust: [k.anzahl_buchungen ? `${kurz(k.erloes_storniert)} EUR (${anteil(k.erloes_storniert, k.gesamterloes)} des gebuchten Umsatzes) gingen durch Stornierungen verloren${verlust ? `, am meisten im ${monatLang(verlust)}` : ""}` : "Keine Daten",
       beschreibung("Gebuchter Umsatz je Anreisemonat in EUR, aufgeteilt in stornobereinigten Umsatz und durch Stornierung entgangenen Umsatz")],
@@ -143,7 +154,7 @@ function deutungen(d) {
 
   T.segment = !top ? ["Keine Daten.", "–"] : [
     `${klarname("segment", top.segment)}: ${anteil(top.anzahl, segGesamt)} der Buchungen. Liegt der Umsatzanteil eines Segments über seinem Buchungsanteil, zahlt es überdurchschnittliche Zimmerpreise, bleibt länger oder storniert seltener. ${wenn(direct, () => `Direktbuchungen: ${anteil(direct.anzahl, segGesamt)}. `)}`
-    + `${wenn(groups, () => `Gruppen (${anteil(groups.anzahl, segGesamt)}) sind zahlenmäßig klein, aber mit ${prozent(groups.stornoquote)} Stornoquote das riskanteste Segment.`)}`,
+    + `${wenn(groups, () => `Gruppen stellen ${anteil(groups.anzahl, segGesamt)} der Buchungen und haben eine Stornoquote von ${prozent(groups.stornoquote)}.`)}`,
     `Abhängigkeit von Online-Reisebüros verringern: Direktbuchungen mit Vorteilen fördern, die es nur über die eigene Seite gibt. ${wenn(groups, "Gruppen nur mit gestaffelten Anzahlungen annehmen.")}`,
   ];
 
@@ -159,10 +170,10 @@ function deutungen(d) {
   ];
 
   T.storno = !vl.length ? ["Keine Daten.", "–"] : [
-    `${wenn(city && resort, () => `Das City Hotel storniert häufiger als das Resort Hotel (${prozent(city.stornoquote)} gegenüber ${prozent(resort.stornoquote)}). `)}`
+    `${wenn(city && resort, () => `Die Stornoquote beträgt im City Hotel ${prozent(city.stornoquote)} und im Resort Hotel ${prozent(resort.stornoquote)}. `)}`
     + `${wenn(nonRefund, () => `Nicht erstattbare Buchungen werden zu ${prozent(nonRefund.stornoquote)} storniert${wenn(noDeposit, () => ` – ohne Anzahlung sind es ${prozent(noDeposit.stornoquote)}`)}; das ist fachlich unplausibel und als Eigenheit der Datenquelle bekannt (vermutlich Sammelbuchungen, die nach Nichterscheinen storniert wurden). `)}`
     + `${wenn(segStorno, () => `Nach Marktsegment ist das Risiko bei ${klarname("segment", segStorno.segment)} am höchsten (${prozent(segStorno.stornoquote)}). `)}`
-    + `Mit der Vorlaufzeit steigt die Quote von ${prozent(vl[0].stornoquote)} auf ${prozent(vl.at(-1).stornoquote)}: Je früher gebucht, desto eher wird storniert.`,
+    + stornoVorlaufText(vl) + ".",
     `Stornobedingungen nach Vorlaufzeit staffeln (lange Vorlaufzeit nur mit Anzahlung), vor der Anreise rückbestätigen, Überbuchung an den Quoten je Segment ausrichten. Die Quote der nicht erstattbaren Buchungen mit der Buchungsabteilung klären – ein Daten- oder Prozessproblem, keine Gästeentscheidung.`,
   ];
 
@@ -174,7 +185,7 @@ function deutungen(d) {
 
   T.laender = !l.length ? ["Keine Daten.", "–"] : [
     `${top5.map((z) => `${klarname("land", z.land)} ${anteil(z.anzahl, lGesamt)}`).join(", ")} – zusammen ${anteil(d3.sum(top5, (z) => z.anzahl), lGesamt)}; die übrigen ${Math.max(0, l.length - 5)} Länder ${anteil(d3.sum(l.slice(5), (z) => z.anzahl), lGesamt)}. `
-    + `${wenn(prt, () => `Portugiesische Gäste stornieren mit ${prozent(prt.stornoquote)} deutlich häufiger als ausländische (${prozent(d.stornoAusland)}); der Inlandsmarkt ist groß, aber unzuverlässig.`)}`,
+    + `${wenn(prt, () => `Die Stornoquote portugiesischer Buchungen beträgt ${prozent(prt.stornoquote)}${d.stornoAusland != null ? `, die ausländischer Buchungen ${prozent(d.stornoAusland)}` : ""}.`)}`,
     `Stornobedingungen nach Markt differenzieren (Inland strenger); Marketingbudget auf Länder mit hohem Umsatz je Buchung und niedriger Stornoquote lenken.`,
   ];
 

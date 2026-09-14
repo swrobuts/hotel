@@ -100,3 +100,25 @@ def test_laender_hotel_summiert_sich_zu_laendern():
 def test_segment_kundentyp_enthaelt_hotel():
     zeile = client.get("/api/segment_kundentyp").json()["daten"][0]
     assert {"segment", "kundentyp", "hotel", "anzahl"} <= set(zeile)
+
+
+def test_umsatz_bei_ausschliesslich_stornierten_buchungen_ist_null_euro():
+    # Nicaragua: im Datensatz sind alle Buchungen storniert.
+    parameter = {"land": "NIC"}
+    kennzahlen = client.get("/api/kennzahlen", params=parameter).json()["daten"][0]
+    assert kennzahlen["anzahl_buchungen"] > 0
+    assert kennzahlen["stornoquote"] == 1
+    assert kennzahlen["erloes_nicht_storniert"] == 0
+    for route in ("monate", "hotels", "segmente", "kanaele", "laender"):
+        zeilen = client.get("/api/" + route, params=parameter).json()["daten"]
+        assert zeilen
+        assert all(z["erloes_nicht_storniert"] == 0 for z in zeilen)
+
+
+def test_umsatz_ohne_buchungen_ist_null_euro():
+    kennzahlen = client.get("/api/kennzahlen", params={"jahr": "2018"}).json()["daten"][0]
+    assert kennzahlen["anzahl_buchungen"] == 0
+    assert kennzahlen["adr"] is None
+    assert kennzahlen["gesamterloes"] == 0
+    assert kennzahlen["erloes_nicht_storniert"] == 0
+    assert kennzahlen["erloes_storniert"] == 0

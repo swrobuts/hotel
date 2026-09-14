@@ -79,7 +79,7 @@ function signalFarbe(anteil, hoeherBesser) {
 function balken(element, daten, o) {
   const zeilen = o.sortieren === false ? [...daten] : [...daten].sort((a, b) => b[o.wert] - a[o.wert]);
   const breite = Math.min(breiteVon(element), o.maxBreite || 960);
-  const maximum = o.domain ? o.domain[1] : Math.max(...zeilen.map((d) => d[o.wert])) * 1.12;
+  const maximum = o.domain ? o.domain[1] : (d3.max(zeilen, (d) => d[o.wert]) || 1) * 1.12;
   const name = (d) => (o.klarname ? o.klarname(d[o.kategorie]) : String(d[o.kategorie]));
   const marks = [
     Plot.ruleY(zeilen, { y: o.kategorie, x1: 0, x2: maximum, stroke: FARBE.fuehrung, strokeDasharray: "1,3" }),

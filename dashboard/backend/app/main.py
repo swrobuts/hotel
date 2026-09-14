@@ -10,7 +10,7 @@ Alle Routen nehmen dieselben Filterparameter entgegen, z. B.
 
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -37,8 +37,11 @@ def filter_parameter(
     kaution: str | None = None, land: str | None = None, vorlaufzeit: str | None = None,
 ) -> Filter:
     """Liest die Filter aus der Adresse; FastAPI übergibt sie jeder Route über Depends."""
-    return filter_aus_werten(hotel=hotel, jahr=jahr, von=von, bis=bis, segment=segment, kanal=kanal,
-                             kundentyp=kundentyp, kaution=kaution, land=land, vorlaufzeit=vorlaufzeit)
+    try:
+        return filter_aus_werten(hotel=hotel, jahr=jahr, von=von, bis=bis, segment=segment, kanal=kanal,
+                                 kundentyp=kundentyp, kaution=kaution, land=land, vorlaufzeit=vorlaufzeit)
+    except ValueError as fehler:
+        raise HTTPException(status_code=422, detail=f"Ungültiger Zeitfilter: {fehler}") from fehler
 
 
 @app.get("/health")

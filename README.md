@@ -156,6 +156,18 @@ Datenbank, Schema, Daten und Rolle lassen sich mit vier Befehlen neu aufbauen;
 sie stehen in [`docs/Supabase_Setup_VPS.md`](docs/Supabase_Setup_VPS.md).
 Das Word-Dokument mit dem Power-BI-Grundgerüst ist nicht Teil des Repos.
 
+Der CSV-Import lädt alle neun Tabellen in einer gemeinsamen Transaktion.
+Bei einer fehlenden/ungültigen CSV oder einem Datenbankfehler bleibt der
+vorherige Bestand erhalten. Ungültige Werte in den beiden 0/1-Spalten werden
+abgewiesen. Import-Regressionstests ohne externe Datenbank:
+
+```bash
+pip install -r requirements.txt pytest
+python -m pytest tests
+```
+
+Tests für das Dashboard sind in [`dashboard/README.md`](dashboard/README.md) beschrieben.
+
 ## Datenquelle
 
 Die Daten stammen aus dem Artikel *Hotel booking demand datasets* von Nuno Antonio,

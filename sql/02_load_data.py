@@ -35,11 +35,13 @@ REIHENFOLGE DES LADENS (wichtig wegen Fremdschlüssel-Constraints):
 
 IDEMPOTENZ:
 --------------------------------------------------------------------------
-Das Skript führt vor jedem Laden ein TRUNCATE der Zieltabelle aus,
+Das Skript leert vor dem Laden alle neun Zieltabellen gemeinsam,
 damit es beliebig oft wiederholt werden kann, ohne Duplikate zu
 erzeugen ("idempotent"). Das bedeutet: ALLE vorher in diesen Tabellen
 gespeicherten Daten werden gelöscht und durch den aktuellen Inhalt
 der CSV-Dateien ersetzt!
+Alle Tabellen werden in einer Transaktion geladen. Schlägt ein Schritt
+fehl, bleibt der vorherige Datenbestand vollständig erhalten.
 --> Bitte nur ausführen, wenn das so gewünscht ist (z.B. beim
     (Neu-)Aufsetzen der Übungsdatenbank). Für produktive Daten ist
     ein TRUNCATE-basierter Full-Reload NICHT geeignet.
@@ -111,17 +113,11 @@ def load_dataframe(csv_path: Path) -> pd.DataFrame:
     return pd.read_csv(csv_path)
 
 
-def truncate_table(conn, table_name: str):
-    """Leert die Zieltabelle vor dem Neuladen (idempotentes Verhalten).
-
-    BESTÄTIGUNG: Mit dem Aufruf dieses Skripts bestätigt der/die
-    Ausführende, dass alle vorhandenen Daten in hotel_bi.<table_name>
-    gelöscht und durch den Inhalt der aktuellen CSV-Datei ersetzt
-    werden sollen (CASCADE, um abhängige Fremdschlüssel-Zeilen mit
-    zu leeren, z.B. fact_bookings beim Leeren einer Dimension).
-    """
-    print(f"  -> TRUNCATE {SCHEMA}.{table_name} (CASCADE) ...")
-    conn.execute(text(f'TRUNCATE TABLE "{SCHEMA}"."{table_name}" CASCADE;'))
+def truncate_tables(conn):
+    """Leert nur die neun Projekt-Tabellen, ohne weitere Tabellen per CASCADE zu löschen."""
+    tables = ", ".join(f'"{SCHEMA}"."{name}"' for _, name in DIMENSION_TABLES + FACT_TABLES)
+    print("  -> TRUNCATE aller neun Zieltabellen ...")
+    conn.execute(text(f"TRUNCATE TABLE {tables};"))
 
 
 def copy_dataframe(conn, df: pd.DataFrame, table_name: str):
@@ -140,9 +136,8 @@ def copy_dataframe(conn, df: pd.DataFrame, table_name: str):
     )
 
     raw_conn = conn.connection  # zugrunde liegende DBAPI-Verbindung (psycopg2)
-    cursor = raw_conn.cursor()
-    cursor.copy_expert(copy_sql, buffer)
-    cursor.close()
+    with raw_conn.cursor() as cursor:
+        cursor.copy_expert(copy_sql, buffer)
 
 
 def prepare_fact_bookings(df: pd.DataFrame) -> pd.DataFrame:
@@ -151,11 +146,13 @@ def prepare_fact_bookings(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     for col in FACT_BOOLEAN_COLUMNS:
         if col in df.columns:
+            if not df[col].isin([0, 1]).all():
+                raise ValueError(f"{col} darf nur 0 und 1 enthalten (keine fehlenden Werte).")
             df[col] = df[col].astype(bool)
     return df
 
 
-def load_table(engine, data_dir: Path, file_stem: str, table_name: str):
+def load_table(conn, data_dir: Path, file_stem: str, table_name: str):
     csv_path = data_dir / f"{file_stem}.csv"
     if not csv_path.exists():
         sys.exit(f"FEHLER: CSV-Datei nicht gefunden: {csv_path}")
@@ -166,11 +163,22 @@ def load_table(engine, data_dir: Path, file_stem: str, table_name: str):
     if table_name == "fact_bookings":
         df = prepare_fact_bookings(df)
 
-    with engine.begin() as conn:
-        truncate_table(conn, table_name)
-        copy_dataframe(conn, df, table_name)
+    copy_dataframe(conn, df, table_name)
 
     print(f"  -> {len(df):,} Zeilen geladen.".replace(",", "."))
+
+
+def load_tables(engine, data_dir: Path):
+    """Lädt den kompletten Stern atomar; ein Fehler rollt auch TRUNCATE zurück."""
+    tables = DIMENSION_TABLES + FACT_TABLES
+    for file_stem, _ in tables:
+        csv_path = data_dir / f"{file_stem}.csv"
+        if not csv_path.is_file():
+            raise FileNotFoundError(f"CSV-Datei nicht gefunden: {csv_path}")
+    with engine.begin() as conn:
+        truncate_tables(conn)
+        for file_stem, table_name in tables:
+            load_table(conn, data_dir, file_stem, table_name)
 
 
 def main():
@@ -188,18 +196,11 @@ def main():
 
     engine = get_engine()
 
-    print("=" * 70)
-    print("Lade Dimensionstabellen (müssen vor der Faktentabelle geladen werden)")
-    print("=" * 70)
-    for file_stem, table_name in DIMENSION_TABLES:
-        load_table(engine, args.data_dir, file_stem, table_name)
-
-    print()
-    print("=" * 70)
-    print("Lade Faktentabelle")
-    print("=" * 70)
-    for file_stem, table_name in FACT_TABLES:
-        load_table(engine, args.data_dir, file_stem, table_name)
+    print("Lade Dimensionen und Fakten gemeinsam in einer Transaktion.")
+    try:
+        load_tables(engine, args.data_dir)
+    finally:
+        engine.dispose()
 
     print()
     print("Fertig. Alle Tabellen wurden (neu) geladen.")

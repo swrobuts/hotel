@@ -56,12 +56,27 @@ Dann <http://localhost:8765> öffnen. Die Datenbankadresse steht in
 `backend/app/datenbank.py` (Rolle `studi_hotel`); `DATABASE_URL` in der
 Umgebung überschreibt sie.
 
-Tests (gegen die lebende Datenbank, mit den Kontrollwerten des Notebooks):
+API-Tests (einschließlich lesender Abfragen gegen die Lehrdatenbank):
 
 ```bash
 cd dashboard
-pytest
+python -m pytest
 ```
+
+Die Filtervalidierung lässt sich auch ohne Datenbank testen:
+`python -m pytest backend/tests/test_filter.py` im Ordner `dashboard/`.
+
+Frontend-Regressionstests (Node.js ab Version 20):
+
+```bash
+cd dashboard
+npm ci
+npm test
+```
+
+Diese Tests verwenden die gleichen D3-/Plot-Versionen wie die Webseite und
+prüfen die Darstellung in einem DOM, schnelle Filterwechsel, leere Ergebnisse
+und die Behandlung von URL-Inhalten. Node.js wird nur für Tests benötigt.
 
 Als Container:
 
@@ -110,6 +125,9 @@ Filterparameter: `hotel`, `jahr`, `von`, `bis` (Monate als `JJJJ-MM`), `segment`
 `kanal`, `kundentyp`, `kaution`, `land` (ISO-3), `vorlaufzeit`. Zeitfilter gelten
 für das Anreisedatum; in `/api/erloes_datum` gilt der Zeitfilter der zweiten
 Reihe für das Statusdatum.
+Ungültige Jahres- und Monatsangaben sowie umgekehrte Zeiträume liefern HTTP 422.
+Leere Filterwerte werden ignoriert. Umsatzsummen ohne passende Buchungen sind
+0; Mittelwerte und Quoten ohne Beobachtungen bleiben leer.
 
 ## Deploy auf Render
 

@@ -127,7 +127,9 @@ async function holen(route, filter = zustand.filter) {
 // Lädt alle Routen parallel und zeichnet danach alles neu. Zwei Routen bekommen
 // weniger Filter: der Monatsverlauf ohne Zeitfilter (für Vormonat und Vorjahr),
 // der Hotelvergleich ohne Hotelfilter (beide Hotels nebeneinander).
+let ladeStand = 0;
 async function allesLaden() {
+  const stand = ++ladeStand;
   document.body.classList.add("laedt");
   try {
     const antworten = await Promise.all([
@@ -135,19 +137,24 @@ async function allesLaden() {
       holen("monate", filterOhne(ZEITFILTER)),
       holen("hotels", filterOhne(["hotel"])),
     ]);
+    if (stand !== ladeStand) return;
     ROUTEN.forEach((route, i) => (zustand.daten[route] = antworten[i]));
     zustand.daten.monate = antworten[ROUTEN.length];
     zustand.daten.hotels_beide = antworten[ROUTEN.length + 1];
     allesZeichnen();
     document.getElementById("fehler").hidden = true;
   } catch (fehler) {
-    const kasten = document.getElementById("fehler");
-    kasten.textContent = "Daten konnten nicht geladen werden (" + fehler.message + "). Bitte neu laden.";
-    kasten.hidden = false;
-    console.error(fehler);
+    if (stand === ladeStand) fehlerAnzeigen(fehler);
   } finally {
-    document.body.classList.remove("laedt");
+    if (stand === ladeStand) document.body.classList.remove("laedt");
   }
+}
+
+function fehlerAnzeigen(fehler) {
+  const kasten = document.getElementById("fehler");
+  kasten.textContent = "Daten konnten nicht geladen werden (" + fehler.message + "). Bitte neu laden.";
+  kasten.hidden = false;
+  console.error(fehler);
 }
 
 // Einmalig beim Start: die Auswahllisten der Filterleiste.
@@ -194,7 +201,12 @@ function chipsZeichnen(aktive) {
     if (name === "bis" && zustand.filter.von === zustand.filter.bis) continue; // ein Chip für einen einzelnen Monat
     const chip = document.createElement("button");
     chip.className = "chip"; chip.type = "button"; chip.title = "Filter entfernen";
-    chip.innerHTML = `<span>${chipText(name)}</span><span aria-hidden="true">×</span>`;
+    const text = document.createElement("span");
+    text.textContent = chipText(name);
+    const kreuz = document.createElement("span");
+    kreuz.setAttribute("aria-hidden", "true");
+    kreuz.textContent = "×";
+    chip.append(text, kreuz);
     chip.addEventListener("click", () => {
       if (name === "von" && zustand.filter.von === zustand.filter.bis) delete zustand.filter.bis;
       filterSetzen(name, zustand.filter[name]);
@@ -264,7 +276,8 @@ function reihe(monate, feld) {
     const vorjahr = nachSchluessel.get((m.jahr - 1) * 100 + m.monat) ?? null;
     const wert = m[feld];
     return { datum: m.datum, jahr: m.jahr, monat: m.monat, imFilter: m.imFilter, wert, vormonat, vorjahr,
-      dVormonat: vormonat ? wert / vormonat - 1 : null, dVorjahr: vorjahr ? wert / vorjahr - 1 : null, bezug: m.bezug };
+      dVormonat: wert != null && vormonat ? wert / vormonat - 1 : null,
+      dVorjahr: wert != null && vorjahr ? wert / vorjahr - 1 : null, bezug: m.bezug };
   });
 }
 
@@ -274,7 +287,7 @@ function kontextBilden() {
   const monatszeilen = D.monate.daten.filter((z) => !zustand.filter.hotel || z.hotel === zustand.filter.hotel);
   const monate = monateVerdichten(monatszeilen);
   const monateImFilter = monate.filter((m) => m.imFilter);
-  const bezug = monateImFilter.at(-1) || monate.at(-1);
+  const bezug = monateImFilter.at(-1);
   if (bezug) bezug.bezug = true;
   const hotels = D.hotels_beide.daten;
   const hotelvergleich = Object.fromEntries(hotels.map((z) => [z.hotel.replace(" Hotel", ""), kennzahlenAus(z)]));
@@ -282,13 +295,14 @@ function kontextBilden() {
   const pivot = D.segment_kundentyp.daten;
   const jeKundentyp = d3.rollups(pivot, (g) => d3.sum(g, (z) => z.anzahl), (z) => z.kundentyp).map(([kundentyp, anzahl]) => ({ kundentyp, anzahl }));
   const laender = D.laender.daten;
-  const ausland = laender.filter((z) => z.land !== "PRT");
+  const ausland = laender.filter((z) => z.land !== "PRT" && z.land !== "UNK");
+  const auslandAnzahl = d3.sum(ausland, (z) => z.anzahl);
   return {
     kennzahlen: D.kennzahlen.daten[0], monate, monateImFilter, bezug,
     hotels, hotelvergleich, segmente: D.segmente.daten, kanaele: D.kanaele.daten, kautionen: D.kautionen.daten,
     vorlauf: D.vorlaufzeit.daten, pivot, pivotTop: jeKundentyp.length ? d3.greatest(jeKundentyp, (z) => z.anzahl) : null,
     laender, laenderHotel: D.laender_hotel.daten,
-    stornoAusland: d3.sum(ausland, (z) => z.stornierungen) / (d3.sum(ausland, (z) => z.anzahl) || 1),
+    stornoAusland: auslandAnzahl ? d3.sum(ausland, (z) => z.stornierungen) / auslandAnzahl : null,
     zeitraumText: zeitraumText(), filterText: filterText(), gefiltert: Object.keys(zustand.filter).length > 0,
   };
 }
@@ -342,9 +356,10 @@ function kachelnZeichnen(d) {
     const kachel = document.createElement("div");
     kachel.className = "kachel";
     kachel.innerHTML = `<div class="kachel-titel">${kpi.titel}</div><div class="kachel-wert">${k.anzahl_buchungen ? kpi.kachel(k[kpi.feld]) : "–"}</div>`
-      + `<div class="kachel-vergleich">${d.zeitraumText.replace("Anreisen ", "").replace("Anreisejahr ", "").replace("Anreisemonat ", "")}</div>`
+      + `<div class="kachel-vergleich"></div>`
       + `<div class="kachel-verlauf"></div>`
       + (b ? abweichungHtml("Vormonat", b.dVormonat, kpi.hoeherBesser) + abweichungHtml("Vorjahresmonat", b.dVorjahr, kpi.hoeherBesser) : "");
+    kachel.querySelector(".kachel-vergleich").textContent = d.zeitraumText.replace("Anreisen ", "").replace("Anreisejahr ", "").replace("Anreisemonat ", "");
     if (r.length > 1) kachel.querySelector(".kachel-verlauf").append(minisaeulen(r, { breite: 200, hoehe: 36, format: kpi.format, hoeherBesser: kpi.hoeherBesser }));
     kasten.append(kachel);
   }
@@ -414,7 +429,8 @@ function dimensionTipp(dimension, kategorie, gesamt) {
 function vertriebZeichnen(d) {
   const paar = (id, daten, kategorie, dimension) => {
     const gesamtAnzahl = d3.sum(daten, (z) => z.anzahl), gesamtUmsatz = d3.sum(daten, (z) => z.erloes_nicht_storniert);
-    const zeilen = daten.map((z) => ({ ...z, anteil1: z.anzahl / gesamtAnzahl, absolut1: z.anzahl, anteil2: z.erloes_nicht_storniert / gesamtUmsatz, absolut2: z.erloes_nicht_storniert }));
+    const zeilen = daten.map((z) => ({ ...z, anteil1: gesamtAnzahl ? z.anzahl / gesamtAnzahl : null, absolut1: z.anzahl,
+      anteil2: gesamtUmsatz ? z.erloes_nicht_storniert / gesamtUmsatz : null, absolut2: z.erloes_nicht_storniert }));
     const tipp = (z) => `${klarname(dimension, z[kategorie])}\n${zahl(z.anzahl)} Buchungen (${prozent(z.anteil1)})\n${kurz(z.erloes_nicht_storniert)} EUR Umsatz (${prozent(z.anteil2)})\nØ Zimmerpreis ${dezimal(z.adr)} EUR · Stornoquote ${prozent(z.stornoquote)}`;
     zeichnen(id, (el) => balkenPaar(el, zeilen, { kategorie, titel1: "Anteil an den Buchungen", titel2: "Anteil am Umsatz", format1: zahl, format2: kurz,
       klarname: (w) => klarname(dimension, w), aktiv: zustand.filter[dimension], beiKlick: (z) => filterSetzen(dimension, z[kategorie]), tipp }));
@@ -556,8 +572,12 @@ async function start() {
   document.getElementById("pivot-gruppierung").addEventListener("change", (e) => { zustand.gruppierung.pivot = e.target.value; pivotZeichnen(kontextBilden()); });
   let zeitgeber = null;
   window.addEventListener("resize", () => { clearTimeout(zeitgeber); zeitgeber = setTimeout(() => zustand.daten.kennzahlen && allesZeichnen(), 250); });
-  await startdatenLaden();
-  await allesLaden();
+  try {
+    await startdatenLaden();
+    await allesLaden();
+  } catch (fehler) {
+    fehlerAnzeigen(fehler);
+  }
 }
 
 start();
