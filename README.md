@@ -124,6 +124,9 @@ Server schreiben und wird für den Download nicht gebraucht.
 | `sql/01_schema.sql` | Sternschema als PostgreSQL-DDL (Schema `hotel_bi`) |
 | `sql/02_load_data.py` | Ladeskript: leert die Tabellen und lädt die CSV-Dateien per `COPY` |
 | `sql/03_rolle_studi_hotel.sql` | lesende Rolle `studi_hotel` |
+| `sql/04_nur_lesen_haerten.sql` | TEMP- und Large-Object-Schreibrechte entziehen |
+| `sql/05_studi_hotel_pg_hba.conf` | Demo-Anmeldung auf die Datenbank `hotel` begrenzen |
+| `sql/06_pruefe_leserechte.py` | Live-Abnahme der Leserechte und Datenbanktrennung |
 | `powerbi/` | Referenzlösung des Power-BI-Reports: `Hotel.pbix`, Projekt `Hotel.pbip`, Abbildungen der vier Seiten |
 | `dashboard/` | interaktives Dashboard (FastAPI + Observable Plot), Dockerfile; `render.yaml` im Repo-Root |
 | `docs/Supabase_Setup_VPS.md` | die Instanz, Verbindungsdaten, Neuaufbau der Datenbank, Sicherheit |

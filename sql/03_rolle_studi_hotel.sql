@@ -22,15 +22,17 @@ BEGIN
 END
 $$;
 
--- Nur lesen: jede Transaktion ist nur lesend, Abfragen enden nach zehn
--- Minuten, offene Transaktionen ohne Aktivität nach fünf Minuten.
+-- Read-only ist eine abschaltbare Sitzungsvorgabe, keine Rechtebeschraenkung.
+-- Die vollstaendige Absicherung erfordert zusaetzlich 04_nur_lesen_haerten.sql
+-- und die Login-Regeln aus 05_studi_hotel_pg_hba.conf (siehe Setup-Anleitung).
+-- Abfragen enden nach zehn Minuten, offene Transaktionen nach fuenf Minuten.
 ALTER ROLE studi_hotel SET default_transaction_read_only = on;
 ALTER ROLE studi_hotel SET search_path = hotel_bi;
 ALTER ROLE studi_hotel SET statement_timeout = '10min';
 ALTER ROLE studi_hotel SET idle_in_transaction_session_timeout = '5min';
 
--- Nur diese Datenbank: CONNECT gehört nicht mehr allen, sondern
--- dem Betreiberkonto und der Studierendenrolle.
+-- Zugriff AUF hotel einschraenken. Der Zugriff dieser Rolle auf andere
+-- Datenbanken wird separat mit pg_hba.conf eingeschraenkt.
 REVOKE CONNECT ON DATABASE hotel FROM PUBLIC;
 GRANT  CONNECT ON DATABASE hotel TO postgres, studi_hotel;
 

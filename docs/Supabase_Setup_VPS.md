@@ -108,6 +108,47 @@ anlegt und `03_rolle_studi_hotel.sql` die Leserechte darauf vergibt. Nach dem
 Laden sind die Rechte durch die Default-Privileges der Rolle `postgres`
 ohnehin gesetzt; ein erneuter Lauf von Schritt 4 schadet nicht.
 
+**Schritt 5 – zusätzliche Schreibmöglichkeiten schließen:**
+
+```bash
+ssh hotel-vps 'docker exec -i supabase-db psql -U supabase_admin -d hotel -v ON_ERROR_STOP=1 -f -' < sql/04_nur_lesen_haerten.sql
+```
+
+Das Skript entzieht `TEMP` und den Aufruf schreibender Large-Object-Funktionen.
+Rechte aus `PUBLIC` lassen sich nicht für eine einzelne Rolle ausschließen.
+Deshalb erhalten andere bereits vorhandene Rollen ihre bisherigen Rechte explizit,
+bevor die entsprechenden PUBLIC-Rechte entzogen werden. Neue Rollen benötigen bei
+Bedarf eigene Grants. `studi_hotel` darf keiner schreibenden Rolle beitreten.
+
+**Schritt 6 – Anmeldung auf hotel begrenzen:**
+
+Die Regeln aus `sql/05_studi_hotel_pg_hba.conf` gehören **vor** die bisherigen
+Regeln in der von `SHOW hba_file` angezeigten Datei. Sie verweigern nur
+`studi_hotel` die Anmeldung an anderen Datenbanken und die physische Replikation;
+für `hotel` und andere Benutzer gelten weiterhin die vorhandenen Regeln.
+
+Vorher die bisherige HBA-Datei sichern, danach `pg_hba_file_rules` auf Fehler
+prüfen und erst dann `SELECT pg_reload_conf()` ausführen. Ein Datenbank-Neustart
+ist für diese Regeländerung nicht notwendig. Vorherige Sitzungen von
+`studi_hotel` beenden, damit bereits bestehende temporäre Objekte nicht weiter
+verwendet werden können; Clients verbinden sich anschließend neu.
+
+Auf dem aktuellen VPS liegt die vollständige angepasste HBA-Datei unter
+`/root/supabase/docker/volumes/db/hotel-pg_hba.conf`. In der vorhandenen
+`docker-compose.override.yml` ergänzt der Dienst `db` diese Bind-Einbindung:
+
+```yaml
+services:
+  db:
+    volumes:
+      - ./volumes/db/hotel-pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+```
+
+Diese Ergänzung erhält alle anderen Compose-Einstellungen. Vor einer
+Container-Neuerstellung `docker compose config --quiet` prüfen. Bei einem
+PostgreSQL-/Supabase-Upgrade die vollständige HBA-Datei mit den neuen
+Herstellervorgaben abgleichen, da die eingebundene Datei deren Fassung ersetzt.
+
 **Kontrolle:**
 
 ```bash
@@ -121,9 +162,17 @@ Erwartet: `119390`. Die übrigen Tabellen: `dim_date` 1064, `dim_country` 178,
 ## 4. Sicherheit
 
 * Die Rolle `studi_hotel` hat `USAGE` auf `hotel_bi` und `SELECT` auf dessen
-  Tabellen, sonst nichts. Schreibversuche scheitern zweifach: an
-  `default_transaction_read_only = on` und – falls jemand diese Einstellung in
-  der Sitzung abschaltet – an den fehlenden Rechten (`permission denied`).
+  Tabellen. Sie besitzt keine Tabellen-/Spaltenschreibrechte, kein `CREATE`,
+  kein `TEMP` und keine ausführbaren Large-Object-Schreibfunktionen.
+  `default_transaction_read_only = on` ist nur eine abschaltbare Voreinstellung;
+  die Berechtigungen schützen auch bei `BEGIN READ WRITE`.
+* Die HBA-Regeln beschränken die Rolle auf die Datenbank `hotel`. Ein Entzug von
+  `CONNECT` auf `hotel` für `PUBLIC` allein würde die Rolle nicht am Zugriff auf
+  andere Datenbanken hindern.
+* Die Live-Abnahme `python sql/06_pruefe_leserechte.py` prüft Tabellen,
+  Rollenattribute, Schemas, Funktionsrechte, zurückgerollte Schreibproben und
+  die Abweisung derselben Rolle an den anderen Datenbanken. Details des
+  Abnahmelaufs: [Rechteprüfung vom 15.09.2026](readonly-audit-2026-09-15.md).
 * Das Kennwort steht im Repo, weil der Datensatz öffentlich ist (Antonio,
   de Almeida & Nunes 2019; Kaggle; TidyTuesday) und die Rolle nichts verändern
   kann. Für eigene, nicht öffentliche Daten wäre das nicht angemessen.
