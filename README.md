@@ -1,7 +1,6 @@
 # Hotel Booking Demand – BI-Einstiegsprojekt
 
-Lehrprojekt für die Vorlesung *Business Intelligence* (BWL, 1. und 3. Semester):
-Von den Rohdaten über Bereinigung und Kennzahlen zum Sternschema, das als
+Lehrprojekt: Von den Rohdaten über Bereinigung und Kennzahlen zum Sternschema, das als
 PostgreSQL-Datenbank für Power BI, Tableau und eigene Auswertungen bereitsteht.
 
 [![In Colab öffnen](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/swrobuts/hotel/blob/main/notebooks/BI_Hotel_Booking_Demand.ipynb)
