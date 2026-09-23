@@ -1,0 +1,116 @@
+{
+  "name": "THWS klar",
+  "dataColors": [
+    "#1E3A8A",
+    "#4B5563",
+    "#9CA3AF",
+    "#CBD5E1",
+    "#6B7280",
+    "#2563EB"
+  ],
+  "background": "#FFFFFF",
+  "foreground": "#131B2E",
+  "tableAccent": "#1E3A8A",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [
+          {
+            "show": false
+          }
+        ],
+        "border": [
+          {
+            "show": false
+          }
+        ],
+        "title": [
+          {
+            "show": true,
+            "fontSize": 12,
+            "fontColor": {
+              "solid": {
+                "color": "#131B2E"
+              }
+            },
+            "alignment": "left"
+          }
+        ],
+        "legend": [
+          {
+            "show": false
+          }
+        ],
+        "categoryAxis": [
+          {
+            "gridlines": false,
+            "showAxisTitle": false,
+            "labelColor": {
+              "solid": {
+                "color": "#4E5A6E"
+              }
+            },
+            "fontSize": 9
+          }
+        ],
+        "valueAxis": [
+          {
+            "gridlines": false,
+            "showAxisTitle": false,
+            "labelColor": {
+              "solid": {
+                "color": "#9CA3AF"
+              }
+            },
+            "fontSize": 9
+          }
+        ],
+        "labels": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#131B2E"
+              }
+            },
+            "fontSize": 9
+          }
+        ],
+        "lineStyles": [
+          {
+            "strokeWidth": 2,
+            "showMarker": false
+          }
+        ]
+      }
+    },
+    "lineChart": {
+      "*": {
+        "labels": [
+          {
+            "show": false
+          }
+        ],
+        "valueAxis": [
+          {
+            "gridlines": true,
+            "gridlineColor": {
+              "solid": {
+                "color": "#EEF0F4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "clusteredBarChart": {
+      "*": {
+        "valueAxis": [
+          {
+            "show": false
+          }
+        ]
+      }
+    }
+  }
+}

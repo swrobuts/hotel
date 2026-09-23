@@ -1,0 +1,29 @@
+table Jahre
+	lineageTag: 29d83f66-dd2b-405e-81ee-24afa55712b5
+
+	column Jahr
+		dataType: int64
+		formatString: 0
+		lineageTag: 5a59bf5f-b89c-446f-80de-4524c9259a7b
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jahr]
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Jahr kurz'
+		dataType: string
+		lineageTag: b55c234d-b146-4e27-9ab1-2ed7ad9f594a
+		summarizeBy: none
+		isNameInferred
+		sourceColumn: [Jahr kurz]
+		sortByColumn: Jahr
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Jahre = calculated
+		mode: import
+		source = ADDCOLUMNS(SELECTCOLUMNS(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[year]), "Jahr", DIM_DATE[year]), "Jahr kurz", "'" & RIGHT(FORMAT([Jahr], "0"), 2))
+
+	annotation PBI_Id = 5cb18978c1eb46edb8c9bfb816253624
+

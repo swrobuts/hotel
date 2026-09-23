@@ -1,16 +1,17 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.6.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
   "name": "titel",
   "position": {
-    "x": 20,
-    "y": 10,
-    "z": 0,
-    "width": 860,
-    "height": 50,
-    "tabOrder": 0
+    "x": 60,
+    "y": 40,
+    "z": 2,
+    "width": 1340,
+    "height": 80,
+    "tabOrder": 2
   },
   "visual": {
     "visualType": "textbox",
+    "drillFilterOtherVisuals": true,
     "objects": {
       "general": [
         {
@@ -19,10 +20,22 @@
               {
                 "textRuns": [
                   {
-                    "value": "Management-Übersicht: Buchungen, Umsatz und Stornoquote",
+                    "value": "Hotel Booking Demand 2015–2017: 26,0 Mio. Euro Umsatz, 37 % der Buchungen storniert",
                     "textStyle": {
-                      "fontSize": "18pt",
-                      "fontWeight": "bold"
+                      "fontSize": "20pt",
+                      "fontWeight": "bold",
+                      "color": "#131B2E"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "119.390 Buchungen, Anreisen Juli 2015 bis August 2017 · Umsatz in Euro ohne stornierte Buchungen · Quelle: Antonio, de Almeida, Nunes (2019)",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#6B7280"
                     }
                   }
                 ]
@@ -31,7 +44,6 @@
           }
         }
       ]
-    },
-    "drillFilterOtherVisuals": true
+    }
   }
 }
