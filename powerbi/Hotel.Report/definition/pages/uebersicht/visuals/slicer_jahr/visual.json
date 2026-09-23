@@ -1,13 +1,13 @@
 {
-  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.7.0/schema.json",
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.12.0/schema.json",
   "name": "slicer_jahr",
   "position": {
-    "x": 1090,
-    "y": 10,
-    "z": 2,
-    "height": 105,
-    "width": 170,
-    "tabOrder": 2
+    "x": 1440,
+    "y": 44,
+    "z": 3,
+    "height": 64,
+    "width": 200,
+    "tabOrder": 3
   },
   "visual": {
     "visualType": "slicer",
@@ -27,6 +27,7 @@
                 }
               },
               "queryRef": "DIM_DATE.year",
+              "nativeQueryRef": "year",
               "active": true
             }
           ]
@@ -34,13 +35,68 @@
       }
     },
     "objects": {
+      "data": [
+        {
+          "properties": {
+            "mode": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Dropdown'"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "selection": [
+        {
+          "properties": {
+            "singleSelect": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
+                }
+              }
+            },
+            "selectAllCheckboxEnabled": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ],
       "header": [
         {
           "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
             "text": {
               "expr": {
                 "Literal": {
                   "Value": "'Anreisejahr'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "false"
                 }
               }
             }

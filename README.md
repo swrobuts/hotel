@@ -63,9 +63,9 @@ Die Zugangsdaten stehen nicht im Notebook, sondern im Secrets-Panel von Colab
    `dim_date` ist zweimal verknüpft: über `arrival_date_key` (aktiv) und über
    `reservation_status_date_key` (inaktiv, für `USERELATIONSHIP`).
 
-Die fertige Referenzlösung (Modell, Measures, vier Seiten) liegt unter
-[`powerbi/`](powerbi/README.md) — als `Hotel.pbix` zum Öffnen und als
-Power-BI-Projekt (`Hotel.pbip`) zum Nachlesen.
+Die fertige Referenzlösung (Modell, Measures, Management-Übersicht und drei
+Detailseiten) liegt unter [`powerbi/`](powerbi/README.md) — als `Hotel.pbix` zum
+Öffnen und als Power-BI-Projekt (`Hotel.pbip`) zum Nachlesen.
 
 ### Tableau Desktop
 
@@ -75,7 +75,13 @@ Power-BI-Projekt (`Hotel.pbip`) zum Nachlesen.
    Authentifizierung *Benutzername und Kennwort* (`studi_hotel` / `thws`),
    *SSL erforderlich* nicht ankreuzen.
 3. Schema `hotel_bi` wählen, `fact_bookings` in den Arbeitsbereich ziehen,
-   die Dimensionen über ihre `*_id`- bzw. `date_key`-Spalten verknüpfen.
+   die Dimensionen über ihre `*_id`- bzw. `date_key`-Spalten verknüpfen –
+   oder *Neues benutzerdefiniertes SQL* mit dem Join aus
+   `tools/flache_buchungstabelle.py`, dann *Daten → Extrakt erstellen*.
+
+Die fertige Referenzlösung (Management-Dashboard mit Kacheln, Balken, Monatslinie,
+Jahres- und Hotelfilter) liegt unter [`tableau/`](tableau/README.md) als
+`Hotel_Dashboard.twbx` mit Extrakt; sie läuft ohne Datenbankverbindung.
 
 ### DBeaver oder psql
 
@@ -126,7 +132,9 @@ Server schreiben und wird für den Download nicht gebraucht.
 | `sql/04_nur_lesen_haerten.sql` | TEMP- und Large-Object-Schreibrechte entziehen |
 | `sql/05_studi_hotel_pg_hba.conf` | Demo-Anmeldung auf die Datenbank `hotel` begrenzen |
 | `sql/06_pruefe_leserechte.py` | Live-Abnahme der Leserechte und Datenbanktrennung |
-| `powerbi/` | Referenzlösung des Power-BI-Reports: `Hotel.pbix`, Projekt `Hotel.pbip`, Abbildungen der vier Seiten |
+| `powerbi/` | Referenzlösung des Power-BI-Reports: `Hotel.pbix`, Projekt `Hotel.pbip`, Bauskript der Übersichtsseite, Abbildungen der Seiten |
+| `tableau/` | Referenzlösung des Tableau-Dashboards: `Hotel_Dashboard.twbx`, Bauskript, Abbildungen |
+| `tools/` | `sollwerte_dashboard.py` (Titelzahlen des Dashboards nachrechnen), `flache_buchungstabelle.py` (Join des Sternschemas als CSV für Tableau) |
 | `dashboard/` | interaktives Dashboard (FastAPI + Observable Plot), Dockerfile; `render.yaml` im Repo-Root |
 | `docs/Supabase_Setup_VPS.md` | die Instanz, Verbindungsdaten, Neuaufbau der Datenbank, Sicherheit |
 | `docs/superpowers/` | Entwurf und Umsetzungsplan der Produktivsetzung |
@@ -181,6 +189,11 @@ Antonio, N., de Almeida, A., & Nunes, L. (2019). Hotel booking demand datasets.
 11.02.2020 (<https://github.com/rfordatascience/tidytuesday/blob/main/data/2020/2020-02-11/readme.md>),
 die auch auf Kaggle als *Hotel Booking Demand* verfügbar ist.
 
-## Nächste Schritte
+## Dashboards
 
-Umsetzung des Reports in Tableau, analog zur Power-BI-Referenzlösung.
+Das Management-Dashboard gibt es dreimal, mit denselben Kennzahlen, Titeln und
+Gestaltungsregeln: als Web-App (`dashboard/`, <https://hotel.butscher.cloud>), in
+Power BI (`powerbi/`, Seite „Übersicht“) und in Tableau (`tableau/`). Die Zahlen in
+den Diagrammtiteln rechnet `tools/sollwerte_dashboard.py` aus den CSV-Dateien nach;
+das Konzeptblatt steht in `docs/superpowers/specs/2026-09-23-hotel-dashboard-tableau-powerbi-design.md`.
+Hotel-Lab 07 erklärt den Aufbau in beiden Werkzeugen Schritt für Schritt.

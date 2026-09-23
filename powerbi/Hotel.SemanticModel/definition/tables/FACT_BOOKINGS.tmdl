@@ -65,6 +65,272 @@ table FACT_BOOKINGS
 		formatString: #,0.00
 		lineageTag: d1e8be93-7dde-5d84-86e2-28988eed1543
 
+	measure Bezugsjahr = IF(ISFILTERED(DIM_DATE[year]), MAX(DIM_DATE[year]), 2016)
+		formatString: 0
+		lineageTag: 783e1ef0-effa-4edf-aadd-65b174143595
+
+	measure Vergleichszeitraum =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			VAR mn = MINX(m, DIM_DATE[month])
+			VAR mx = MAXX(m, DIM_DATE[month])
+			RETURN IF(ISEMPTY(m), BLANK(),
+			    IF(mn = mx, FORMAT(DATE(2000, mn, 1), "MMM"), FORMAT(DATE(2000, mn, 1), "MMM") & "–" & FORMAT(DATE(2000, mx, 1), "MMM"))
+			    & " " & FORMAT(j - 1, "0"))
+		lineageTag: 21dff206-c6a4-4e29-86cb-5b67185fb0f5
+
+	measure 'Umsatz Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			RETURN CALCULATE([Umsatz], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+		formatString: #,0
+		lineageTag: 5c4a5126-5449-4757-9582-8028e26363cb
+
+	measure 'Umsatz Vergleich Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Umsatz], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j, m)
+		formatString: #,0
+		lineageTag: 200aebd4-621f-4dee-856c-0ad52d78af74
+
+	measure 'Umsatz Vergleich Vorjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Umsatz], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1, m)
+		formatString: #,0
+		lineageTag: 3e4c644a-82c9-47a3-87f2-d3dc54258281
+
+	measure 'Umsatz Veränderung' =
+			VAR a = [Umsatz Vergleich Bezugsjahr]
+			VAR v = [Umsatz Vergleich Vorjahr]
+			VAR d = DIVIDE(a - v, v)
+			RETURN IF(ISBLANK(v), "kein Vorjahr im Datensatz",
+			    IF(d >= 0, "+", "−") & FORMAT(ABS(d) * 100, "0.0") & " % zu " & [Vergleichszeitraum])
+		lineageTag: fc3c603c-874c-4108-8f96-e9d6a456296d
+
+	measure 'Umsatz Farbe' = IF(ISBLANK([Umsatz Vergleich Vorjahr]) || [Umsatz Vergleich Bezugsjahr] >= [Umsatz Vergleich Vorjahr], "#1E3A8A", "#B23B1E")
+		lineageTag: f712ff4c-b48d-4d67-a2ef-bc85171a8bb0
+
+	measure 'Umsatz Titel' = "UMSATZ " & FORMAT([Bezugsjahr], "0")
+		lineageTag: db5abc8c-6b1c-40ff-aa63-f3bf3fa943ba
+
+	measure 'Umsatz Aktuell' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y = j, CALCULATE([Umsatz], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0
+		lineageTag: d49a832b-0636-4ed7-ac31-0de819e20d58
+
+	measure 'Umsatz Vorjahre' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y <> j, CALCULATE([Umsatz], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0
+		lineageTag: 02ba376b-14ad-4e9d-9490-beb46be71cf3
+
+	measure 'Buchungen Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			RETURN CALCULATE([Anzahl Buchungen], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+		formatString: #,0
+		lineageTag: 93ec09e6-b41a-46f7-b9c1-8d8ce6110a59
+
+	measure 'Buchungen Vergleich Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Anzahl Buchungen], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j, m)
+		formatString: #,0
+		lineageTag: 2f058303-9198-4adb-ad8b-3decdadf6012
+
+	measure 'Buchungen Vergleich Vorjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Anzahl Buchungen], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1, m)
+		formatString: #,0
+		lineageTag: 5fc160a1-5008-44d9-ba7c-4c401e68a48f
+
+	measure 'Buchungen Veränderung' =
+			VAR a = [Buchungen Vergleich Bezugsjahr]
+			VAR v = [Buchungen Vergleich Vorjahr]
+			VAR d = DIVIDE(a - v, v)
+			RETURN IF(ISBLANK(v), "kein Vorjahr im Datensatz",
+			    IF(d >= 0, "+", "−") & FORMAT(ABS(d) * 100, "0.0") & " % zu " & [Vergleichszeitraum])
+		lineageTag: 3ed0eb38-d2fc-432c-8959-ee91eb8e2678
+
+	measure 'Buchungen Farbe' = IF(ISBLANK([Buchungen Vergleich Vorjahr]) || [Buchungen Vergleich Bezugsjahr] >= [Buchungen Vergleich Vorjahr], "#1E3A8A", "#B23B1E")
+		lineageTag: a1dbd239-1679-4443-a4a2-878257231694
+
+	measure 'Buchungen Titel' = "BUCHUNGEN " & FORMAT([Bezugsjahr], "0")
+		lineageTag: e9f7a1e7-84a0-4909-97c9-ccb0a12646fd
+
+	measure 'Buchungen Aktuell' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y = j, CALCULATE([Anzahl Buchungen], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0
+		lineageTag: 86859cf3-62f7-48ec-9c34-d995088fbc70
+
+	measure 'Buchungen Vorjahre' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y <> j, CALCULATE([Anzahl Buchungen], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0
+		lineageTag: ddc0169f-79c9-4ed5-93fe-913380a290a2
+
+	measure 'Stornoquote Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			RETURN CALCULATE([Stornoquote %], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+		formatString: 0.0 %
+		lineageTag: c809c96c-d562-4b43-bb6f-f5d264a0c2f9
+
+	measure 'Stornoquote Vergleich Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Stornoquote %], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j, m)
+		formatString: 0.0 %
+		lineageTag: 6ae3684b-9cd8-4020-a3d4-08018a100343
+
+	measure 'Stornoquote Vergleich Vorjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Stornoquote %], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1, m)
+		formatString: 0.0 %
+		lineageTag: c15c85cf-d692-45f3-8f43-2271455a6ba8
+
+	measure 'Stornoquote Veränderung' =
+			VAR a = [Stornoquote Vergleich Bezugsjahr]
+			VAR v = [Stornoquote Vergleich Vorjahr]
+			VAR d = (a - v) * 100
+			RETURN IF(ISBLANK(v), "kein Vorjahr im Datensatz",
+			    IF(d > 0, "+", IF(d < 0, "−", "±")) & FORMAT(ABS(d), "0.0") & " Punkte zu " & [Vergleichszeitraum])
+		lineageTag: ed653260-826f-4b02-b70a-2ee10dccbfca
+
+	measure 'Stornoquote Farbe' = IF(ISBLANK([Stornoquote Vergleich Vorjahr]) || [Stornoquote Vergleich Bezugsjahr] <= [Stornoquote Vergleich Vorjahr], "#1E3A8A", "#B23B1E")
+		lineageTag: f820470c-49c0-4029-92e4-ac66d9b7ec6a
+
+	measure 'Stornoquote Titel' = "STORNOQUOTE " & FORMAT([Bezugsjahr], "0")
+		lineageTag: 6a515183-4849-4554-8ec8-83429f286612
+
+	measure 'Stornoquote Aktuell' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y = j, CALCULATE([Stornoquote %], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: 0.0 %
+		lineageTag: cc2cc113-47d4-4a74-b294-8f14012789aa
+
+	measure 'Stornoquote Vorjahre' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y <> j, CALCULATE([Stornoquote %], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: 0.0 %
+		lineageTag: bdcf7181-e303-41ac-9afb-80df5ecc63bc
+
+	measure 'ADR Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			RETURN CALCULATE([Ø ADR], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+		formatString: #,0.00
+		lineageTag: 3d4902c4-2028-4f86-b1ca-6d9e76f29d29
+
+	measure 'ADR Vergleich Bezugsjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Ø ADR], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j, m)
+		formatString: #,0.00
+		lineageTag: 8af1edd3-d368-4eb7-acd3-985d37b55da3
+
+	measure 'ADR Vergleich Vorjahr' =
+			VAR j = [Bezugsjahr]
+			VAR mb = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j)
+			VAR mv = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[month]), REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1)
+			VAR m = INTERSECT(mb, mv)
+			RETURN CALCULATE([Ø ADR], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = j - 1, m)
+		formatString: #,0.00
+		lineageTag: a83e0081-7500-450c-9629-1f59e7e2b4d3
+
+	measure 'ADR Veränderung' =
+			VAR a = [ADR Vergleich Bezugsjahr]
+			VAR v = [ADR Vergleich Vorjahr]
+			VAR d = DIVIDE(a - v, v)
+			RETURN IF(ISBLANK(v), "kein Vorjahr im Datensatz",
+			    IF(d >= 0, "+", "−") & FORMAT(ABS(d) * 100, "0.0") & " % zu " & [Vergleichszeitraum])
+		lineageTag: 02402ea9-d8bc-4991-a4da-7f89199c4a5c
+
+	measure 'ADR Farbe' = IF(ISBLANK([ADR Vergleich Vorjahr]) || [ADR Vergleich Bezugsjahr] >= [ADR Vergleich Vorjahr], "#1E3A8A", "#B23B1E")
+		lineageTag: 931578c8-b5ba-4fd7-a5b1-ff99a370fa55
+
+	measure 'ADR Titel' = "Ø ADR " & FORMAT([Bezugsjahr], "0")
+		lineageTag: a63a002c-7443-4c14-b50a-10a5d40e7216
+
+	measure 'ADR Aktuell' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y = j, CALCULATE([Ø ADR], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0.00
+		lineageTag: 570b5669-a71d-45e8-8131-6f976adeb061
+
+	measure 'ADR Vorjahre' =
+			VAR j = [Bezugsjahr]
+			VAR y = MAX(Jahre[Jahr])
+			RETURN IF(y <> j, CALCULATE([Ø ADR], REMOVEFILTERS(DIM_DATE), DIM_DATE[year] = y))
+		formatString: #,0.00
+		lineageTag: 2ab68802-9ba3-4964-ad5a-d3ebbfe0df8d
+
+	measure 'Letzter Monat Datum' = MAXX(CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[Monat]), ALLSELECTED()), DIM_DATE[Monat])
+		formatString: MMMM yyyy
+		lineageTag: ba6baf58-0afd-432c-b92a-5f6935c43ac4
+
+	measure 'Erster Monat Datum' = MINX(CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[Monat]), ALLSELECTED()), DIM_DATE[Monat])
+		formatString: MMMM yyyy
+		lineageTag: a34080ac-b049-4df9-af70-11c419587c4a
+
+	measure 'Letzter Monat' = IF(MAX(DIM_DATE[Monat]) = [Letzter Monat Datum], [Umsatz])
+		formatString: #,0
+		lineageTag: 7db5f381-fe93-488a-be66-19c0fe28f215
+
+	measure Saisonpunkte =
+			VAR y = MAX(DIM_DATE[year])
+			VAR cur = [Umsatz]
+			VAR mx = MAXX(CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[Monat]), ALLSELECTED(), DIM_DATE[year] = y), [Umsatz])
+			RETURN IF(cur = mx && MAX(DIM_DATE[Monat]) < [Letzter Monat Datum], cur)
+		formatString: #,0
+		lineageTag: b96b59ec-f710-4252-a6be-744c2ec7b5d8
+
+	measure Zeitraum =
+			VAR t = CALCULATETABLE(SUMMARIZE(FACT_BOOKINGS, DIM_DATE[year]), ALLSELECTED())
+			VAR mn = MINX(t, DIM_DATE[year])
+			VAR mx = MAXX(t, DIM_DATE[year])
+			RETURN IF(mn = mx, FORMAT(mn, "0"), FORMAT(mn, "0") & "–" & FORMAT(mx, "0"))
+		lineageTag: 5ec2fc64-bfa9-428e-9bf4-e9f32449a1ab
+
+	measure Hotelauswahl = IF(HASONEVALUE(DIM_HOTEL[hotel]), MAX(DIM_HOTEL[hotel]), "beide Hotels")
+		lineageTag: cf6ca359-0c7e-4bd2-80e6-f6cbc1a6bceb
+
+	measure 'Untertitel Segment' = "Umsatz in Euro je Marktsegment, " & [Zeitraum] & ", " & [Hotelauswahl]
+		lineageTag: 04e0f7c5-71d4-47ca-b1d6-7958517cbb4d
+
+	measure 'Untertitel Vorlaufzeit' = "Stornoquote in % je Vorlaufzeit-Klasse, " & [Zeitraum] & ", " & [Hotelauswahl]
+		lineageTag: 4d7af36d-9575-445a-aa4f-afc620440d56
+
+	measure 'Untertitel Länder' = "Umsatz in Euro je Herkunftsland, die zwölf größten von 178, " & [Zeitraum] & ", " & [Hotelauswahl]
+		lineageTag: 9ba95ce4-9ee0-42e0-8e0d-8b8d6042515f
+
+	measure 'Untertitel Monate' = "Umsatz je Anreisemonat in Euro, " & FORMAT([Erster Monat Datum], "MMMM yyyy") & " bis " & FORMAT([Letzter Monat Datum], "MMMM yyyy") & ", " & [Hotelauswahl]
+		lineageTag: 33798cc3-ff22-4c7d-889b-d5824e3d7ea6
+
 	column booking_id
 		dataType: int64
 		formatString: 0
@@ -352,10 +618,10 @@ table FACT_BOOKINGS
 
 	column Lead-Time-Bucket =
 			SWITCH(TRUE(),
-			    FACT_BOOKINGS[lead_time] <= 7, "0-7",
-			    FACT_BOOKINGS[lead_time] <= 30, "8-30",
-			    FACT_BOOKINGS[lead_time] <= 90, "31-90",
-			    "90+")
+			    FACT_BOOKINGS[lead_time] <= 7, "0–7 Tage",
+			    FACT_BOOKINGS[lead_time] <= 30, "8–30 Tage",
+			    FACT_BOOKINGS[lead_time] <= 90, "31–90 Tage",
+			    "über 90 Tage")
 		dataType: string
 		lineageTag: b49af994-78fc-51ff-93a3-f1b0e94a7ad5
 		summarizeBy: none

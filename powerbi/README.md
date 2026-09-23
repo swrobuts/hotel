@@ -9,10 +9,10 @@ Geprüft mit Power BI Desktop 2.152 (März 2026). Datenquelle: Nuno Antonio, Ana
 Almeida und Luis Nunes, *Hotel booking demand datasets*, Data in Brief, Band 22,
 Februar 2019 (CC BY 4.0).
 
-> **Stand 12.09.2026:** Die Measures im Projekt (`Hotel.pbip`) heißen Umsatz,
-> Gebuchter Umsatz und Durch Stornierung entgangener Umsatz. `Hotel.pbix` trägt
-> noch die früheren Namen (Gesamterlös, Erlös …); die Pflege der PBIX übernimmt
-> Robert selbst.
+> **Stand 23.09.2026:** `Hotel.pbix` und `Hotel.pbip` sind wieder identisch
+> (aus Desktop 2.152 gespeichert, Daten vom 23.09.2026). Der Bericht ist im
+> Power-BI-Dienst veröffentlicht (Arbeitsbereich „Mein Arbeitsbereich“ von Robert,
+> Konto der THWS nötig): <https://app.powerbi.com/groups/me/reports/c0843c14-2f7d-4f5f-9bc0-fc2d21d31608/uebersicht>
 
 ## Öffnen
 
@@ -42,6 +42,7 @@ Daten enthält.
 | `Hotel.SemanticModel/definition/tables/*.tmdl` | je Tabelle: Spalten, Power-Query-Abfrage, bei `FACT_BOOKINGS` alle Measures und die berechneten Spalten |
 | `Hotel.SemanticModel/definition/relationships.tmdl` | die neun Beziehungen |
 | `Hotel.Report/definition/pages/*/visuals/*/visual.json` | je Visual: Typ, Felder, Titel, Sortierung, Filter |
+| `bau_uebersicht.py` | erzeugt Seite `uebersicht`, die Dashboard-Measures, die Tabelle `Jahre`, die Spalte `Land` und die Designdatei (idempotent) |
 
 ## Modell
 
@@ -63,12 +64,20 @@ Gebuchte Zimmernächte · Ø ADR · Gebuchter Umsatz · Umsatz · Durch Stornier
 entgangener Umsatz · Wiederholungsgast-Anteil % · Anteil mit Sonderwünschen % ·
 Gebuchter Umsatz nach Stornodatum · Ø gebuchter Umsatz je Buchung.
 
+**Measures der Übersichtsseite** (Stand 23.09.2026, erzeugt von `bau_uebersicht.py`):
+`Bezugsjahr` (gewähltes Jahr, ohne Auswahl 2016), je Kennzahl `… Bezugsjahr`,
+`… Vergleich Bezugsjahr` und `… Vergleich Vorjahr` (nur die Monate, die beide Jahre
+haben), `… Veränderung`, `… Farbe`, `… Titel`, `… Aktuell` und `… Vorjahre`
+(Minisäulen über die beziehungslose Tabelle `Jahre`); für die Monatslinie
+`Saisonpunkte` und `Letzter Monat`; für die Untertitel `Zeitraum`, `Hotelauswahl`
+und `Untertitel …`. `DIM_COUNTRY[Land]` liefert deutsche Ländernamen.
+
 **Begriffe:** Umsatz = Zimmerpreis (ADR) × Nächte je Buchung, nur Übernachtung,
 für nicht stornierte Buchungen; gebuchter Umsatz = alle Buchungen vor
 Stornierung; durch Stornierung entgangener Umsatz = Differenz.
 
-**Berechnete Spalten:** `FACT_BOOKINGS[Lead-Time-Bucket]` (0-7, 8-30, 31-90,
-90+ Tage) mit verborgener Sortierspalte; `DIM_DATE[Monat]` (erster Tag des
+**Berechnete Spalten:** `FACT_BOOKINGS[Lead-Time-Bucket]` (0–7, 8–30, 31–90,
+über 90 Tage) mit verborgener Sortierspalte; `DIM_COUNTRY[Land]` (deutscher Ländername); `DIM_DATE[Monat]` (erster Tag des
 Monats, für Zeitachsen); `DIM_DATE[Wochentag Nr]` (verborgen, sortiert
 `weekday_name`).
 
@@ -80,9 +89,14 @@ ausgeblendet; in der Modellansicht sind sie sichtbar.
 
 ## Seiten
 
-**1 Management-Übersicht** — Karten Anzahl Buchungen, Gebuchter Umsatz,
-Stornoquote %, Ø ADR; zwei Liniendiagramme je Anreisemonat; Slicer Hotel und
-Anreisejahr (2015–2017).
+**1 Übersicht** (1920 × 1080, neu am 23.09.2026 nach den Regeln des Skills
+`thws-dashboard`) — Seitentitel als Aussage; Dropdowns Anreisejahr und Hotel;
+vier Kacheln (Umsatz, Buchungen, Stornoquote, Ø ADR) mit Wert des Bezugsjahrs,
+Veränderung zum Vorjahr über gemeinsame Monate und Minisäulen je Jahr; Balken je
+Marktsegment, je Vorlaufzeit-Klasse und je Herkunftsland (zwölf größte von 178);
+Umsatz je Anreisemonat mit grauen Punkten am Jahreshoch und rotem letztem Wert.
+Designdatei `Hotel.Report/StaticResources/RegisteredResources/THWS_klar.json`.
+Die Titelzahlen sind mit `../tools/sollwerte_dashboard.py` nachgerechnet.
 
 ![Seite 1](bilder/seite1.png)
 
